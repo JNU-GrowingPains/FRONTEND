@@ -60,7 +60,7 @@ Content-Type: application/json
       "siteUrl": "https://suelo.co.kr",
       "timezone": "아시아/서울",
       "businessCategory": "화장품",
-      "createdAt": "2024-01-01T00:00:00Z"
+      "createdAt": "2026-01-01T00:00:00Z"
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
@@ -196,7 +196,7 @@ Authorization: Bearer {token}
     "siteUrl": "https://shuello.com",
     "timezone": "아시아/서울",
     "businessCategory": "화장품",
-    "createdAt": "2024-01-01T00:00:00Z"
+    "createdAt": "2026-01-01T00:00:00Z"
   }
 }
 ```
@@ -334,7 +334,7 @@ GET /api/products
 
 **Request:**
 ```http
-GET /api/products/p1/stats?startDate=2024-01-01&endDate=2024-01-31
+GET /api/products/p1/stats?startDate=2026-01-01&endDate=2026-01-31
 ```
 
 **Query Parameters:**
@@ -354,7 +354,7 @@ GET /api/products/p1/stats?startDate=2024-01-01&endDate=2024-01-31
     },
     "timeline": [
       {
-        "date": "2024-01-01",
+        "date": "2026-01-01",
         "sales": 15,
         "buyers": 12,
         "revenue": 675000
@@ -394,7 +394,7 @@ GET /api/customers?page=1&limit=10&sortBy=totalSpent&order=desc
         "totalSpent": 2450000,
         "totalOrders": 28,
         "avgOrderValue": 87500,
-        "lastPurchaseDate": "2024-12-08",
+        "lastPurchaseDate": "2026-12-08",
         "points": 24500
       }
     ],
@@ -459,7 +459,7 @@ GET /api/customers/top?limit=3&sortBy=points
 
 **Request:**
 ```http
-GET /api/products/p1/reviews?startDate=2024-01-01&endDate=2024-01-31
+GET /api/products/p1/reviews?startDate=2026-01-01&endDate=2026-01-31
 ```
 
 **Response:**
@@ -474,7 +474,7 @@ GET /api/products/p1/reviews?startDate=2024-01-01&endDate=2024-01-31
         "rating": 5,
         "content": "피부가 촉촉해졌어요!",
         "keywords": ["촉촉", "피부", "만족"],
-        "createdAt": "2024-01-15T10:30:00Z"
+        "createdAt": "2026-01-15T10:30:00Z"
       }
     ],
     "summary": {
@@ -490,7 +490,7 @@ GET /api/products/p1/reviews?startDate=2024-01-01&endDate=2024-01-31
 
 **Request:**
 ```http
-GET /api/products/p1/reviews/keywords?startDate=2024-01-01&endDate=2024-01-31
+GET /api/products/p1/reviews/keywords?startDate=2026-01-01&endDate=2026-01-31
 ```
 
 **Response:**

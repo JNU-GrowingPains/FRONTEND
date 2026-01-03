@@ -29,7 +29,7 @@ const mockUsers: User[] = [
     siteUrl: 'https://suelo.co.kr',
     timezone: '아시아/서울',
     businessCategory: '화장품',
-    createdAt: new Date('2024-01-01'),
+    createdAt: new Date('2026-01-01'),
     phone: '010-1234-5678',
     storeDescription: '건강한 아름다움을 위한 프리미엄 화장품 브랜드',
     businessNumber: '123-45-67890',

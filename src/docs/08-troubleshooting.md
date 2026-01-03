@@ -374,7 +374,7 @@ apiClient.interceptors.response.use(
 
 #### 문제
 ```
-2024-12-10T00:00:00.000Z → "Invalid Date"
+2026-12-10T00:00:00.000Z → "Invalid Date"
 ```
 
 #### 해결 방법
@@ -383,13 +383,13 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 // 1. Date 객체로 변환
-const date = new Date('2024-12-10');
+const date = new Date('2026-12-10');
 
 // 2. 포맷팅
 const formatted = format(date, 'yyyy년 MM월 dd일', { locale: ko });
 
 // 3. ISO 문자열에서 변환
-const isoString = '2024-12-10T00:00:00.000Z';
+const isoString = '2026-12-10T00:00:00.000Z';
 const date = new Date(isoString);
 const formatted = format(date, 'MM월 dd일');
 ```

@@ -166,7 +166,7 @@ Mock 모드에서 사용할 수 있는 테스트 계정:
 
 ## 📝 라이선스
 
-Copyright © 2024 성장통 (Growth Analytics)
+Copyright © 2026 성장통 (Growth Analytics)
 
 ## 🔗 관련 링크
 
