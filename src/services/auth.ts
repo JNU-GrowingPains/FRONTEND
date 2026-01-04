@@ -71,17 +71,29 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       };
     }
     
-    const token = `mock-jwt-token-${Date.now()}`;
+    const accessToken = `mock-jwt-token-${Date.now()}`;
+    const refreshToken = `mock-refresh-token-${Date.now()}`;
     
-    return { user, token };
+    return { user, accessToken, refreshToken };
   } else {
-    // Production 모드
-    return await apiClient.post<AuthResponse>(endpoints.auth.login, credentials);
+    // Production 모드 - 명세서 응답 형식에 맞게 파싱
+    const response = await apiClient.post<{
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+    }>(endpoints.auth.login, credentials);
+    
+    // 명세서는 로그인 응답에 user 정보를 반환하지 않음
+    return {
+      user: null,
+      accessToken: response.access_token,
+      refreshToken: response.refresh_token,
+    };
   }
 }
 
 /**
- * 회원가입
+ * 회원가입 (명세서: /auth/register)
  */
 export async function signup(data: SignupData): Promise<AuthResponse> {
   if (config.apiMode === 'mock') {
@@ -132,17 +144,61 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
     
     mockUsers.push(newUser);
     
-    const token = `mock-jwt-token-${Date.now()}`;
+    const accessToken = `mock-jwt-token-${Date.now()}`;
+    const refreshToken = `mock-refresh-token-${Date.now()}`;
     
-    return { user: newUser, token };
+    return { user: newUser, accessToken, refreshToken };
   } else {
-    // Production 모드
-    return await apiClient.post<AuthResponse>(endpoints.auth.signup, data);
+    // Production 모드 - 명세서에 따르면 register는 user 정보만 반환
+    // 하지만 실제로는 로그인을 다시 해야 할 수도 있음
+    // 일단 명세서대로 구현하고, 필요시 추가 로그인 호출
+    const registerData = {
+      site_type: data.siteType,
+      site_name: data.siteName,
+      site_url: data.siteUrl,
+      site_tz: data.timezone,
+      site_category: data.businessCategory,
+      first_name: data.name,
+      last_name: data.lastName,
+      email: data.email,
+      password: data.password,
+      agree_privacy: data.agreeToTerms,
+    };
+    
+    const response = await apiClient.post<{
+      customer_id: number;
+      name: string;
+      email: string;
+    }>(endpoints.auth.register, registerData);
+    
+    // 회원가입 후 자동 로그인을 위해 로그인 호출
+    const loginResponse = await login({
+      email: data.email,
+      password: data.password,
+    });
+    
+    // 회원가입 정보와 로그인 토큰 결합
+    return {
+      user: {
+        id: String(response.customer_id),
+        email: response.email,
+        name: response.name.split(' ')[0] || response.name,
+        lastName: response.name.split(' ').slice(1).join(' ') || '',
+        siteType: data.siteType,
+        siteName: data.siteName,
+        siteUrl: data.siteUrl,
+        timezone: data.timezone,
+        businessCategory: data.businessCategory,
+        createdAt: new Date(),
+      },
+      accessToken: loginResponse.accessToken,
+      refreshToken: loginResponse.refreshToken,
+    };
   }
 }
 
 /**
- * 비밀번호 찾기
+ * 비밀번호 찾기 (명세서에 없음, 기존 기능 유지)
  */
 export async function forgotPassword(
   data: ForgotPasswordData
@@ -169,44 +225,75 @@ export async function forgotPassword(
       message: '비밀번호 재설정 링크가 이메일로 전송되었습니다.',
     };
   } else {
-    // Production 모드
-    return await apiClient.post<{ message: string }>(
-      endpoints.auth.forgotPassword,
-      data
-    );
+    // Production 모드 - 명세서에 없으므로 에러 반환하거나 기존 엔드포인트 사용
+    throw new Error('비밀번호 찾기 기능은 현재 지원되지 않습니다.');
   }
 }
 
 /**
  * 로그아웃
  */
-export async function logout(): Promise<void> {
+export async function logout(refreshToken?: string): Promise<void> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
     console.log('로그아웃 완료');
   } else {
-    // Production 모드
-    await apiClient.post<void>(endpoints.auth.logout);
+    // Production 모드 - 명세서에 따르면 refresh_token을 body에 포함
+    if (!refreshToken) {
+      // refreshToken이 없으면 store에서 가져오기
+      const { useAuthStore } = await import('../store/useAuthStore');
+      refreshToken = useAuthStore.getState().refreshToken || '';
+    }
+    
+    await apiClient.post<void>(endpoints.auth.logout, {
+      refresh_token: refreshToken,
+    });
   }
 }
 
 /**
- * 현재 사용자 정보 조회
+ * 토큰 재발급
  */
-export async function getCurrentUser(token: string): Promise<User> {
+export async function refreshToken(refreshToken: string): Promise<{
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}> {
+  if (config.apiMode === 'mock') {
+    // Mock 모드
+    await delay(config.mockDelay);
+    return {
+      access_token: `mock-jwt-token-${Date.now()}`,
+      refresh_token: `mock-refresh-token-${Date.now()}`,
+      token_type: 'bearer',
+    };
+  } else {
+    // Production 모드
+    return await apiClient.post(endpoints.auth.refresh, {
+      refresh_token: refreshToken,
+    });
+  }
+}
+
+/**
+ * 현재 사용자 정보 조회 (명세서에 없음, 기존 기능 유지)
+ */
+export async function getCurrentUser(accessToken?: string): Promise<User> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
     
+    const token = accessToken || '';
     if (!token || !token.startsWith('mock-jwt-token')) {
       throw new Error('유효하지 않은 토큰입니다.');
     }
     
     return mockUsers[0];
   } else {
-    // Production 모드
-    return await apiClient.get<User>(endpoints.auth.me);
+    // Production 모드 - 명세서에 /auth/me가 없으므로 에러 반환
+    // 실제 구현 시에는 별도 엔드포인트가 필요할 수 있음
+    throw new Error('사용자 정보 조회 기능은 현재 지원되지 않습니다.');
   }
 }
 

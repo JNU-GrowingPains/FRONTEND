@@ -39,7 +39,8 @@ function AppContent() {
   const [isInitializing, setIsInitializing] = useState(true);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
   const logoutMutation = useLogout();
@@ -52,20 +53,26 @@ function AppContent() {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       // 현재 store에서 토큰 가져오기 (직접 접근하여 최신 값 보장)
-      const currentToken = useAuthStore.getState().token;
+      const state = useAuthStore.getState();
+      const currentAccessToken = state.accessToken;
+      const currentRefreshToken = state.refreshToken;
+      const currentUser = state.user;
       
-      if (currentToken) {
-        try {
-          const userData = await authService.getCurrentUser(currentToken);
-          // 토큰이 유효하면 로그인 상태 유지
-          login(userData, currentToken);
-        } catch (error) {
-          // 토큰이 유효하지 않으면 로그아웃
-          console.error('토큰 검증 실패:', error);
-          logout();
-        }
+      // accessToken과 user가 모두 있으면 로그인 상태 유지
+      // 명세서에 /auth/me 엔드포인트가 없으므로 토큰 검증은 생략
+      if (currentAccessToken && currentUser) {
+        // 이미 로그인 상태로 간주
+        setIsInitializing(false);
+      } else if (currentAccessToken && !currentUser) {
+        // 토큰은 있지만 user 정보가 없는 경우 (예: 로그인 직후)
+        // 명세서에 user 정보 조회 엔드포인트가 없으므로 로그아웃 처리
+        console.warn('토큰은 있지만 사용자 정보가 없습니다. 로그아웃합니다.');
+        logout();
+        setIsInitializing(false);
+      } else {
+        // 토큰이 없는 경우
+        setIsInitializing(false);
       }
-      setIsInitializing(false);
     };
 
     checkAuth();

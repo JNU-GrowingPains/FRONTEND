@@ -4,10 +4,12 @@ import type { User } from '../types/auth';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User | null, accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  updateTokens: (accessToken: string, refreshToken?: string) => void;
   updateUser: (user: Partial<User>) => void;
 }
 
@@ -15,20 +17,28 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
-      login: (user, token) =>
+      login: (user, accessToken, refreshToken) =>
         set({
           user,
-          token,
+          accessToken,
+          refreshToken,
           isAuthenticated: true,
         }),
       logout: () =>
         set({
           user: null,
-          token: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
         }),
+      updateTokens: (accessToken, refreshToken) =>
+        set((state) => ({
+          accessToken,
+          refreshToken: refreshToken ?? state.refreshToken,
+        })),
       updateUser: (userData) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
@@ -38,13 +48,14 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage', // localStorage key
       // isAuthenticated는 저장하지 않음 (항상 계산된 값으로 사용)
       partialize: (state) => ({
-        token: state.token,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         user: state.user,
       }),
-      // 복원 시 token과 user가 모두 있을 때만 isAuthenticated를 true로 설정
+      // 복원 시 accessToken과 user가 모두 있을 때만 isAuthenticated를 true로 설정
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state.isAuthenticated = !!(state.token && state.user);
+          state.isAuthenticated = !!(state.accessToken && state.user);
         }
       },
     }

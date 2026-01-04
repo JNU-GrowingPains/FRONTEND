@@ -41,8 +41,9 @@ export interface ForgotPasswordData {
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  user: User | null;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface AuthError {

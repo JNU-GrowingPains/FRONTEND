@@ -12,36 +12,58 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * 리뷰 목록 조회
+ * 명세서: GET /api/v1/review-analysis/list
  */
-export async function getReviews(productId?: string): Promise<Review[]> {
+export async function getReviews(params?: {
+  page?: number;
+  limit?: number;
+  rating?: number;
+}): Promise<Review[]> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
     
-    if (productId) {
-      return mockReviews.filter(r => r.productId === productId);
+    if (params?.rating) {
+      return mockReviews.filter(r => r.rating === params.rating);
     }
     
     return mockReviews;
   } else {
     // Production 모드
-    if (productId) {
-      return await apiClient.get<Review[]>(endpoints.reviews.byProduct(productId));
-    }
-    return await apiClient.get<Review[]>(endpoints.reviews.list);
+    return await apiClient.get<Review[]>(endpoints.reviewAnalysis.list, params);
   }
 }
 
 /**
- * 워드 클라우드 데이터 조회
+ * 리뷰 통계 조회
+ * 명세서: GET /api/v1/review-analysis/stats
  */
-export async function getWordCloud(productId: string): Promise<WordCloudItem[]> {
+export async function getReviewStats(): Promise<any> {
+  if (config.apiMode === 'mock') {
+    // Mock 모드
+    await delay(config.mockDelay);
+    return {
+      totalReviews: mockReviews.length,
+      averageRating: 4.2,
+      negativeReviews: mockReviews.filter(r => r.rating <= 2).slice(0, 3),
+    };
+  } else {
+    // Production 모드
+    return await apiClient.get<any>(endpoints.reviewAnalysis.stats);
+  }
+}
+
+/**
+ * 리뷰 키워드 데이터 조회 (워드클라우드용)
+ * 명세서: GET /api/v1/review-analysis/keywords
+ */
+export async function getWordCloud(productId?: string): Promise<WordCloudItem[]> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
     return mockWordCloud;
   } else {
     // Production 모드
-    return await apiClient.get<WordCloudItem[]>(endpoints.reviews.wordCloud(productId));
+    return await apiClient.get<WordCloudItem[]>(endpoints.reviewAnalysis.keywords);
   }
 }

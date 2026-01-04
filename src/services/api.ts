@@ -51,19 +51,19 @@ class ApiClient {
    * 요청 헤더 생성 (동적으로 토큰 가져오기)
    */
   private getHeaders(): HeadersInit {
-    const headers = { ...this.baseHeaders };
+    const headers: Record<string, string> = { ...this.baseHeaders } as Record<string, string>;
     
     // Zustand store에서 토큰 가져오기 (동적)
     try {
-      const token = useAuthStore.getState().token;
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      const accessToken = useAuthStore.getState().accessToken;
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
       }
     } catch (error) {
       // store가 아직 초기화되지 않은 경우 무시
     }
     
-    return headers;
+    return headers as HeadersInit;
   }
 
   /**
@@ -193,40 +193,46 @@ class ApiClient {
 export const apiClient = new ApiClient();
 
 /**
- * API 엔드포인트 정의
+ * API 엔드포인트 정의 (명세서 기준)
  */
 export const endpoints = {
   // 인증
   auth: {
+    register: '/auth/register',
     login: '/auth/login',
-    signup: '/auth/signup',
+    refresh: '/auth/refresh',
     logout: '/auth/logout',
-    me: '/auth/me',
-    forgotPassword: '/auth/forgot-password',
   },
   
-  // 상품
-  products: {
-    list: '/products',
-    detail: (id: string) => `/products/${id}`,
-    stats: (id: string) => `/products/${id}/stats`,
+  // 상품 분석
+  productAnalysis: {
+    products: '/api/v1/product-analysis/products',
+    stats: '/api/v1/product-analysis/stats',
+    chartTrend: '/api/v1/product-analysis/chart/trend',
   },
   
-  // 고객
-  customers: {
-    list: '/customers',
-    detail: (id: string) => `/customers/${id}`,
-    gradeDistribution: '/customers/grade-distribution',
+  // 고객 분석
+  customerAnalysis: {
+    kpis: '/api/v1/customer-analysis/kpis',
+    grades: '/api/v1/customer-analysis/grades',
+    list: '/api/v1/customer-analysis/list',
   },
   
-  // 리뷰
-  reviews: {
-    list: '/reviews',
-    byProduct: (productId: string) => `/reviews?productId=${productId}`,
-    wordCloud: (productId: string) => `/reviews/${productId}/word-cloud`,
+  // 리뷰 분석
+  reviewAnalysis: {
+    stats: '/api/v1/review-analysis/stats',
+    keywords: '/api/v1/review-analysis/keywords',
+    list: '/api/v1/review-analysis/list',
   },
   
-  // 계정
+  // 재구매 분석
+  repurchaseAnalysis: {
+    products: '/api/v1/repurchase-analysis/products',
+    kpis: '/api/v1/repurchase-analysis/kpis',
+    customers: '/api/v1/repurchase-analysis/customers',
+  },
+  
+  // 계정 (명세서에 없지만 기존 기능 유지)
   account: {
     profile: '/account/profile',
     updateProfile: '/account/profile',

@@ -12,15 +12,40 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * 고객 목록 조회
+ * 명세서: GET /api/v1/customer-analysis/list
  */
-export async function getCustomers(): Promise<Customer[]> {
+export async function getCustomers(params?: {
+  page?: number;
+  limit?: number;
+  grade?: string;
+  sort_by?: 'latest_purchase' | 'purchase_count' | 'points' | 'name';
+}): Promise<Customer[]> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
     return mockCustomers;
   } else {
     // Production 모드
-    return await apiClient.get<Customer[]>(endpoints.customers.list);
+    return await apiClient.get<Customer[]>(endpoints.customerAnalysis.list, params);
+  }
+}
+
+/**
+ * 고객 KPI 조회
+ * 명세서: GET /api/v1/customer-analysis/kpis
+ */
+export async function getCustomerKPIs(): Promise<any> {
+  if (config.apiMode === 'mock') {
+    // Mock 모드
+    await delay(config.mockDelay);
+    return {
+      totalCustomers: mockCustomers.length,
+      newCustomers: 10,
+      activeCustomers: 50,
+    };
+  } else {
+    // Production 모드
+    return await apiClient.get<any>(endpoints.customerAnalysis.kpis);
   }
 }
 
@@ -44,6 +69,7 @@ export async function getCustomerDetail(customerId: string): Promise<Customer> {
 
 /**
  * 고객 등급 분포 조회
+ * 명세서: GET /api/v1/customer-analysis/grades
  */
 export async function getGradeDistribution(): Promise<GradeDistribution[]> {
   if (config.apiMode === 'mock') {
@@ -52,6 +78,6 @@ export async function getGradeDistribution(): Promise<GradeDistribution[]> {
     return mockGradeDistribution;
   } else {
     // Production 모드
-    return await apiClient.get<GradeDistribution[]>(endpoints.customers.gradeDistribution);
+    return await apiClient.get<GradeDistribution[]>(endpoints.customerAnalysis.grades);
   }
 }

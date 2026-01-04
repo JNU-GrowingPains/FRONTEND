@@ -14,7 +14,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
     onSuccess: (data) => {
-      login(data.user, data.token);
+      login(data.user, data.accessToken, data.refreshToken);
       toast.success('로그인 되었습니다.');
     },
     onError: (error: Error) => {
@@ -29,7 +29,7 @@ export const useSignup = () => {
   return useMutation({
     mutationFn: (data: SignupData) => authService.signup(data),
     onSuccess: (data) => {
-      login(data.user, data.token);
+      login(data.user, data.accessToken, data.refreshToken);
       toast.success('회원가입이 완료되었습니다.');
     },
     onError: (error: Error) => {
@@ -52,9 +52,10 @@ export const useForgotPassword = () => {
 
 export const useLogout = () => {
   const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => authService.logout(refreshToken || undefined),
     onSuccess: () => {
       logout();
       toast.success('로그아웃 되었습니다.');
