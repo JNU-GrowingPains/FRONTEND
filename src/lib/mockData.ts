@@ -148,7 +148,7 @@ export const mockCustomers: Customer[] = [
     email: 'seoyeon.kim@email.com',
     grade: '슈린이 VIP',
     points: 18920,
-    totalAmount: 6780000,
+    totalSpent: 6780000,
     purchaseCount: 35,
     firstPurchaseDate: '2022-11-03',
     recentPurchaseDate: '2026-12-01',
@@ -161,7 +161,7 @@ export const mockCustomers: Customer[] = [
     email: 'jiwoo.park@email.com',
     grade: '슈린이 VIP',
     points: 15840,
-    totalAmount: 5420000,
+    totalSpent: 5420000,
     purchaseCount: 28,
     firstPurchaseDate: '2023-01-15',
     recentPurchaseDate: '2026-11-28',
@@ -174,7 +174,7 @@ export const mockCustomers: Customer[] = [
     email: 'minjun.lee@email.com',
     grade: '슈린이 VIP',
     points: 14320,
-    totalAmount: 4890000,
+    totalSpent: 4890000,
     purchaseCount: 24,
     firstPurchaseDate: '2023-03-20',
     recentPurchaseDate: '2026-11-26',
@@ -187,7 +187,7 @@ export const mockCustomers: Customer[] = [
     email: 'hayoon.choi@email.com',
     grade: '슈린이 VIP',
     points: 12950,
-    totalAmount: 4320000,
+    totalSpent: 4320000,
     purchaseCount: 22,
     firstPurchaseDate: '2023-02-10',
     recentPurchaseDate: '2026-11-24',
@@ -200,7 +200,7 @@ export const mockCustomers: Customer[] = [
     email: 'sua.jung@email.com',
     grade: '슈린이 VIP',
     points: 10450,
-    totalAmount: 3650000,
+    totalSpent: 3650000,
     purchaseCount: 20,
     firstPurchaseDate: '2023-04-12',
     recentPurchaseDate: '2026-11-30',
@@ -213,7 +213,7 @@ export const mockCustomers: Customer[] = [
     email: 'doyoon.kang@email.com',
     grade: '슈린이 VIP',
     points: 9120,
-    totalAmount: 3240000,
+    totalSpent: 3240000,
     purchaseCount: 18,
     firstPurchaseDate: '2023-05-22',
     recentPurchaseDate: '2026-11-28',
@@ -226,7 +226,7 @@ export const mockCustomers: Customer[] = [
     email: 'siwoo.yoon@email.com',
     grade: '슈린이 VIP',
     points: 8450,
-    totalAmount: 2890000,
+    totalSpent: 2890000,
     purchaseCount: 15,
     firstPurchaseDate: '2023-06-05',
     recentPurchaseDate: '2026-11-20',
@@ -239,7 +239,7 @@ export const mockCustomers: Customer[] = [
     email: 'eunseo.jang@email.com',
     grade: '슈린이 VIP',
     points: 7230,
-    totalAmount: 2340000,
+    totalSpent: 2340000,
     purchaseCount: 12,
     firstPurchaseDate: '2023-08-12',
     recentPurchaseDate: '2026-11-18',
@@ -252,7 +252,7 @@ export const mockCustomers: Customer[] = [
     email: 'yejun.han@email.com',
     grade: '슈린이 VIP',
     points: 6890,
-    totalAmount: 2150000,
+    totalSpent: 2150000,
     purchaseCount: 11,
     firstPurchaseDate: '2023-07-28',
     recentPurchaseDate: '2026-11-22',
@@ -265,7 +265,7 @@ export const mockCustomers: Customer[] = [
     email: 'seojun.oh@email.com',
     grade: '슈린이 VIP',
     points: 5670,
-    totalAmount: 1890000,
+    totalSpent: 1890000,
     purchaseCount: 9,
     firstPurchaseDate: '2023-09-18',
     recentPurchaseDate: '2026-11-10',
@@ -278,7 +278,7 @@ export const mockCustomers: Customer[] = [
     email: 'jia.lim@email.com',
     grade: '슈린이 PLATINUM',
     points: 3420,
-    totalAmount: 980000,
+    totalSpent: 980000,
     purchaseCount: 6,
     firstPurchaseDate: '2026-01-10',
     recentPurchaseDate: '2026-11-15',
@@ -291,7 +291,7 @@ export const mockCustomers: Customer[] = [
     email: 'haeun.song@email.com',
     grade: '슈린이 PLATINUM',
     points: 2890,
-    totalAmount: 720000,
+    totalSpent: 720000,
     purchaseCount: 5,
     firstPurchaseDate: '2026-02-15',
     recentPurchaseDate: '2026-11-12',
@@ -304,7 +304,7 @@ export const mockCustomers: Customer[] = [
     email: 'yunseo.bae@email.com',
     grade: '슈린이 PLATINUM',
     points: 2340,
-    totalAmount: 620000,
+    totalSpent: 620000,
     purchaseCount: 4,
     firstPurchaseDate: '2026-03-25',
     recentPurchaseDate: '2026-09-14',
@@ -317,7 +317,7 @@ export const mockCustomers: Customer[] = [
     email: 'jiho.shin@email.com',
     grade: '슈린이 PLATINUM',
     points: 1580,
-    totalAmount: 450000,
+    totalSpent: 450000,
     purchaseCount: 3,
     firstPurchaseDate: '2026-06-10',
     recentPurchaseDate: '2026-10-05',
@@ -330,7 +330,7 @@ export const mockCustomers: Customer[] = [
     email: 'daeun.hong@email.com',
     grade: '슈린이 GOLD',
     points: 890,
-    totalAmount: 280000,
+    totalSpent: 280000,
     purchaseCount: 2,
     firstPurchaseDate: '2026-08-05',
     recentPurchaseDate: '2026-10-22',
@@ -343,7 +343,7 @@ export const mockCustomers: Customer[] = [
     email: 'yujin.ahn@email.com',
     grade: '슈린이 VIP',
     points: 7890,
-    totalAmount: 2560000,
+    totalSpent: 2560000,
     purchaseCount: 14,
     firstPurchaseDate: '2023-05-08',
     recentPurchaseDate: '2026-11-29',
@@ -356,7 +356,7 @@ export const mockCustomers: Customer[] = [
     email: 'minseo.jo@email.com',
     grade: '슈린이 VIP',
     points: 16240,
-    totalAmount: 5680000,
+    totalSpent: 5680000,
     purchaseCount: 31,
     firstPurchaseDate: '2022-12-18',
     recentPurchaseDate: '2026-12-02',
@@ -369,7 +369,7 @@ export const mockCustomers: Customer[] = [
     email: 'taeyoon.kwon@email.com',
     grade: '슈린이 VIP',
     points: 6340,
-    totalAmount: 2180000,
+    totalSpent: 2180000,
     purchaseCount: 10,
     firstPurchaseDate: '2023-10-14',
     recentPurchaseDate: '2026-11-19',
@@ -382,7 +382,7 @@ export const mockCustomers: Customer[] = [
     email: 'seohyun.ryu@email.com',
     grade: '슈린이 PLATINUM',
     points: 1920,
-    totalAmount: 540000,
+    totalSpent: 540000,
     purchaseCount: 3,
     firstPurchaseDate: '2026-04-22',
     recentPurchaseDate: '2026-09-30',
@@ -395,7 +395,7 @@ export const mockCustomers: Customer[] = [
     email: 'harin.noh@email.com',
     grade: '슈린이 PLATINUM',
     points: 1230,
-    totalAmount: 380000,
+    totalSpent: 380000,
     purchaseCount: 2,
     firstPurchaseDate: '2026-07-11',
     recentPurchaseDate: '2026-11-08',
@@ -616,19 +616,19 @@ export const generateRepurchaseCustomers = (productId: string | null): Repurchas
 // 재구매 상품 데이터 생성
 const generateRepurchaseProducts = (productId: string | null): RepurchaseProduct[] => {
   const allProducts: RepurchaseProduct[] = [
-    { productId: 'p1', productName: '히알루론산 세럼', repurchaseCount: 156 },
-    { productId: 'p2', productName: '비타민C 앰플', repurchaseCount: 134 },
-    { productId: 'p3', productName: '수분 크림', repurchaseCount: 128 },
-    { productId: 'p4', productName: '클렌징 폼', repurchaseCount: 98 },
-    { productId: 'p5', productName: '선크림 SPF50+', repurchaseCount: 87 },
-    { productId: 'p6', productName: '나이아신아마이드 토너', repurchaseCount: 76 },
-    { productId: 'p7', productName: '레티놀 나이트 크림', repurchaseCount: 65 },
-    { productId: 'p8', productName: '미스트 토너', repurchaseCount: 54 },
-    { productId: 'p9', productName: '아이 세럼', repurchaseCount: 43 },
-    { productId: 'p10', productName: '수딩 마스크팩', repurchaseCount: 38 },
+    { productId: 'p1', productName: '히알루론산 세럼', price: '45000', repurchaseRate: 68.5 },
+    { productId: 'p2', productName: '비타민C 앰플', price: '52000', repurchaseRate: 65.2 },
+    { productId: 'p3', productName: '수분 크림', price: '38000', repurchaseRate: 62.8 },
+    { productId: 'p4', productName: '클렌징 폼', price: '28000', repurchaseRate: 58.3 },
+    { productId: 'p5', productName: '선크림 SPF50+', price: '35000', repurchaseRate: 55.7 },
+    { productId: 'p6', productName: '나이아신아마이드 토너', price: '42000', repurchaseRate: 52.1 },
+    { productId: 'p7', productName: '레티놀 나이트 크림', price: '68000', repurchaseRate: 48.5 },
+    { productId: 'p8', productName: '미스트 토너', price: '32000', repurchaseRate: 45.2 },
+    { productId: 'p9', productName: '아이 세럼', price: '55000', repurchaseRate: 41.8 },
+    { productId: 'p10', productName: '수딩 마스크팩', price: '25000', repurchaseRate: 38.3 },
   ];
 
-  return allProducts.sort((a, b) => b.repurchaseCount - a.repurchaseCount);
+  return allProducts.sort((a, b) => (b.repurchaseRate || 0) - (a.repurchaseRate || 0));
 };
 
 // 재구매 배송지 데이터 생성 (실제 고객 데이터 기반)
@@ -671,31 +671,13 @@ const generateRepurchaseAddresses = (): RepurchaseAddress[] => {
 
 // 재구매 KPI 데이터 생성 (다중 상품 지원)
 const generateRepurchaseKPI = (productIds: string[] | null, products: RepurchaseProduct[]): RepurchaseData['kpi'] => {
-  // 모든 상품의 재구매 수 합계 계산
-  const totalRepurchaseCount = products.reduce((sum, p) => sum + p.repurchaseCount, 0);
-  
   // 선택된 상품들 필터링
   const selectedProducts = productIds && productIds.length > 0
     ? products.filter(p => productIds.includes(p.productId))
     : products; // 선택이 없으면 전체 상품 사용
 
-  // 선택된 상품들의 재구매 수 합계
-  const selectedRepurchaseCount = selectedProducts.reduce((sum, p) => sum + p.repurchaseCount, 0);
-  
-  // 상품별로 다른 KPI 값 생성 (각 상품의 기본값)
-  const productKPIs = selectedProducts.map((product) => {
-    const productRatio = totalRepurchaseCount > 0 ? product.repurchaseCount / totalRepurchaseCount : 0;
-    return {
-      totalRepurchaseCount: product.repurchaseCount,
-      averageRepurchaseRate: 68.5 + (productRatio * 10 - 5),
-      averageRepurchaseDays: Math.floor(35 * (0.8 + productRatio * 0.4)),
-      sameProductRepurchaseRate: 52.3 + (productRatio * 10 - 5),
-      repurchaseCustomerRevenueContribution: 78.2 + (productRatio * 10 - 5),
-    };
-  });
-
-  // 평균 KPI 계산 (가중 평균 사용)
-  if (productKPIs.length === 0) {
+  // 평균 KPI 계산
+  if (selectedProducts.length === 0) {
     return {
       totalRepurchaseCount: 0,
       averageRepurchaseRate: 0,
@@ -705,34 +687,27 @@ const generateRepurchaseKPI = (productIds: string[] | null, products: Repurchase
     };
   }
 
-  // 총 재구매 수
-  const avgTotalRepurchaseCount = selectedRepurchaseCount;
-
-  // 가중 평균 계산 (재구매 수를 가중치로 사용)
-  const totalWeight = productKPIs.reduce((sum, kpi) => sum + kpi.totalRepurchaseCount, 0);
-  
-  if (totalWeight === 0) {
-    // 재구매 수가 없으면 단순 평균
+  // 상품별로 다른 KPI 값 생성 (각 상품의 재구매율 기반)
+  const productKPIs = selectedProducts.map((product) => {
+    const rate = product.repurchaseRate || 50;
+    const rateRatio = rate / 100; // 0~1 사이 값
     return {
-      totalRepurchaseCount: avgTotalRepurchaseCount,
-      averageRepurchaseRate: productKPIs.reduce((sum, kpi) => sum + kpi.averageRepurchaseRate, 0) / productKPIs.length,
-      averageRepurchaseDays: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.averageRepurchaseDays, 0) / productKPIs.length),
-      sameProductRepurchaseRate: productKPIs.reduce((sum, kpi) => sum + kpi.sameProductRepurchaseRate, 0) / productKPIs.length,
-      repurchaseCustomerRevenueContribution: productKPIs.reduce((sum, kpi) => sum + kpi.repurchaseCustomerRevenueContribution, 0) / productKPIs.length,
+      totalRepurchaseCount: Math.floor(100 + rateRatio * 100),
+      averageRepurchaseRate: rate,
+      averageRepurchaseDays: Math.floor(25 + (1 - rateRatio) * 30), // 재구매율이 높을수록 기간 짧음
+      sameProductRepurchaseRate: 40 + rateRatio * 30,
+      repurchaseCustomerRevenueContribution: 65 + rateRatio * 20,
     };
-  }
+  });
 
-  // 가중 평균 계산
-  const weightedAverage = (field: keyof Omit<RepurchaseData['kpi'], 'totalRepurchaseCount'>) => {
-    return productKPIs.reduce((sum, kpi) => sum + (kpi[field] * kpi.totalRepurchaseCount), 0) / totalWeight;
-  };
-
+  // 단순 평균 계산
+  const count = productKPIs.length;
   return {
-    totalRepurchaseCount: avgTotalRepurchaseCount,
-    averageRepurchaseRate: weightedAverage('averageRepurchaseRate'),
-    averageRepurchaseDays: Math.round(weightedAverage('averageRepurchaseDays')),
-    sameProductRepurchaseRate: weightedAverage('sameProductRepurchaseRate'),
-    repurchaseCustomerRevenueContribution: weightedAverage('repurchaseCustomerRevenueContribution'),
+    totalRepurchaseCount: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.totalRepurchaseCount, 0) / count),
+    averageRepurchaseRate: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.averageRepurchaseRate, 0) / count * 10) / 10,
+    averageRepurchaseDays: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.averageRepurchaseDays, 0) / count),
+    sameProductRepurchaseRate: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.sameProductRepurchaseRate, 0) / count * 10) / 10,
+    repurchaseCustomerRevenueContribution: Math.round(productKPIs.reduce((sum, kpi) => sum + kpi.repurchaseCustomerRevenueContribution, 0) / count * 10) / 10,
   };
 };
 
@@ -803,10 +778,11 @@ export const generateCustomerRepurchaseData = (customerId: string): RepurchaseDa
       return {
         productId: product.id,
         productName: product.name,
-        repurchaseCount: baseCount,
+        price: product.price?.toString() || '0',
+        repurchaseRate: (baseCount / 10) * 5, // 간단한 재구매율 계산
       };
     })
-    .sort((a, b) => b.repurchaseCount - a.repurchaseCount);
+    .sort((a, b) => (b.repurchaseRate || 0) - (a.repurchaseRate || 0));
 
   // 고객의 재구매 배송지 데이터 생성
   // 고객의 주소를 기반으로 생성

@@ -1,17 +1,102 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
-import { User, Store, Bell, Mail, Phone, Building, Calendar, ShoppingBag, Users } from 'lucide-react';
+import { User, Store, Bell, Mail, Calendar, ShoppingBag, Users } from 'lucide-react';
 import { mockStoreOwner, mockNotificationSettings } from '../lib/accountData';
+import { useAuthStore } from '../store/useAuthStore';
+import * as authService from '../services/auth';
 
 export function AccountPage() {
-  const [owner, setOwner] = useState(mockStoreOwner);
+  const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  
+  const [owner, setOwner] = useState({
+    name: user?.name || mockStoreOwner.name,
+    storeName: user?.siteName || mockStoreOwner.storeName,
+    email: user?.email || mockStoreOwner.email,
+    joinDate: user?.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : mockStoreOwner.joinDate,
+  });
+  
+  const [dashboardStats, setDashboardStats] = useState({
+    total_products: 0,
+    total_customers: 0,
+    monthly_revenue: 0,
+  });
+  
   const [notifications, setNotifications] = useState(mockNotificationSettings);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // 사용자 정보 및 대시보드 통계 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 프로필 정보가 없으면 조회
+        if (!user || user.id === 'unknown') {
+          const profile = await authService.getCurrentUser();
+          updateUser(profile);
+          
+          setOwner({
+            name: `${profile.lastName} ${profile.name}`.trim() || profile.name,
+            storeName: profile.siteName || '쇼핑몰',
+            email: profile.email,
+            joinDate: profile.createdAt ? new Date(profile.createdAt).toISOString().split('T')[0] : mockStoreOwner.joinDate,
+          });
+        } else {
+          setOwner({
+            name: `${user.lastName} ${user.name}`.trim() || user.name,
+            storeName: user.siteName || '쇼핑몰',
+            email: user.email,
+            joinDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : mockStoreOwner.joinDate,
+          });
+        }
+        
+        // 대시보드 통계 조회
+        const stats = await authService.getDashboardStats();
+        setDashboardStats(stats);
+        
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [user, updateUser]);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // API 호출하여 저장하는 로직이 여기 들어갈 예정
-    alert('변경사항이 저장되었습니다.');
+  const handleSave = async () => {
+    try {
+      // 프로필 업데이트 API 호출 (API는 이름만 업데이트 가능)
+      const [lastName, ...firstNameParts] = owner.name.split(' ');
+      const firstName = firstNameParts.join(' ') || lastName;
+      
+      const updateData: any = {
+        name: firstNameParts.length > 0 ? firstName : owner.name,
+        lastName: firstNameParts.length > 0 ? lastName : '',
+      };
+      
+      // storeName은 응답에서 받아오지만 업데이트는 안됨 (로컬에서만 유지)
+      updateData.siteName = owner.storeName;
+      
+      // user에서 가져올 수 있는 다른 필드들 (로컬에서 유지)
+      if (user?.siteUrl) updateData.siteUrl = user.siteUrl;
+      if (user?.siteType) updateData.siteType = user.siteType;
+      if (user?.timezone) updateData.timezone = user.timezone;
+      if (user?.businessCategory) updateData.businessCategory = user.businessCategory;
+      
+      const updatedUser = await authService.updateProfile(updateData);
+      
+      // Zustand store 업데이트
+      updateUser(updatedUser);
+      
+      setIsEditing(false);
+      alert('변경사항이 저장되었습니다.');
+    } catch (error) {
+      console.error('프로필 저장 실패:', error);
+      alert('변경사항 저장에 실패했습니다.');
+    }
   };
 
   const handleNotificationToggle = (key: keyof typeof notifications) => {
@@ -77,7 +162,9 @@ export function AccountPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 mb-1">등록 상품</p>
-                <p className="text-3xl text-gray-900">10</p>
+                <p className="text-3xl text-gray-900">
+                  {isLoading ? '...' : dashboardStats.total_products}
+                </p>
               </div>
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
                 <Store size={24} />
@@ -88,7 +175,9 @@ export function AccountPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 mb-1">전체 고객</p>
-                <p className="text-3xl text-gray-900">1,190</p>
+                <p className="text-3xl text-gray-900">
+                  {isLoading ? '...' : dashboardStats.total_customers.toLocaleString()}
+                </p>
               </div>
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
                 <Users size={24} />
@@ -99,7 +188,12 @@ export function AccountPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 mb-1">이번 달 매출</p>
-                <p className="text-3xl text-emerald-600">48.5M</p>
+                <p className="text-3xl text-emerald-600">
+                  {isLoading 
+                    ? '...' 
+                    : `₩${(dashboardStats.monthly_revenue / 1000000).toFixed(1)}M`
+                  }
+                </p>
               </div>
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
                 <ShoppingBag size={24} />
@@ -139,36 +233,10 @@ export function AccountPage() {
 
               <div>
                 <label className="text-sm text-gray-500 block mb-2">이메일</label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    value={owner.email}
-                    onChange={(e) => setOwner({ ...owner, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <Mail className="text-gray-400" size={18} />
-                    <p className="text-gray-900">{owner.email}</p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-500 block mb-2">연락처</label>
-                {isEditing ? (
-                  <input
-                    type="tel"
-                    value={owner.phone}
-                    onChange={(e) => setOwner({ ...owner, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <Phone className="text-gray-400" size={18} />
-                    <p className="text-gray-900">{owner.phone}</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
+                  <Mail className="text-gray-400" size={18} />
+                  <p className="text-gray-900">{owner.email}</p>
+                </div>
               </div>
 
               <div>
@@ -193,36 +261,10 @@ export function AccountPage() {
             <div className="space-y-5">
               <div>
                 <label className="text-sm text-gray-500 block mb-2">상점명</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={owner.storeName}
-                    onChange={(e) => setOwner({ ...owner, storeName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <Store className="text-gray-400" size={18} />
-                    <p className="text-gray-900">{owner.storeName}</p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-500 block mb-2">상점 설명</label>
-                {isEditing ? (
-                  <textarea
-                    value={owner.storeDescription}
-                    onChange={(e) => setOwner({ ...owner, storeDescription: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    rows={4}
-                  />
-                ) : (
-                  <div className="flex items-start gap-3 px-4 py-3 bg-gray-50 rounded-lg">
-                    <Building className="text-gray-400 mt-0.5" size={18} />
-                    <p className="text-gray-900">{owner.storeDescription}</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
+                  <Store className="text-gray-400" size={18} />
+                  <p className="text-gray-900">{owner.storeName}</p>
+                </div>
               </div>
             </div>
           </div>

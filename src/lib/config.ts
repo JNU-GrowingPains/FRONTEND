@@ -6,6 +6,7 @@
 // 안전하게 환경 변수 접근
 const getEnv = (key: string, defaultValue: string = ''): string => {
   try {
+    // @ts-ignore - Vite env
     return import.meta.env?.[key] || defaultValue;
   } catch {
     return defaultValue;
@@ -14,10 +15,10 @@ const getEnv = (key: string, defaultValue: string = ''): string => {
 
 export const config = {
   // API 모드: 'mock' (개발) 또는 'production' (실제 배포)
-  apiMode: (getEnv('VITE_API_MODE', 'mock')) as 'mock' | 'production',
+  apiMode: (getEnv('VITE_API_MODE', 'production')) as 'mock' | 'production',
   
   // API Base URL (프로덕션 모드일 때 사용)
-  apiBaseUrl: getEnv('VITE_API_BASE_URL', 'https://api.suelo.co.kr/v1'),
+  apiBaseUrl: getEnv('VITE_API_BASE_URL', 'http://172.20.10.4:8000'),
   
   // API 인증 키
   apiKey: getEnv('VITE_API_KEY', ''),
@@ -31,8 +32,8 @@ export const config = {
     version: getEnv('VITE_APP_VERSION', '1.0.0'),
   },
   
-  // API 타임아웃 (ms)
-  apiTimeout: 30000,
+  // API 타임아웃 (ms) - 재구매 상세 API가 느릴 수 있어서 60초로 설정
+  apiTimeout: 60000,
   
   // Mock 데이터 지연 시간 (ms)
   mockDelay: 300,

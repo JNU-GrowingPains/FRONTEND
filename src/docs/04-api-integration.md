@@ -347,10 +347,10 @@ GET /api/products/p1/stats?startDate=2026-01-01&endDate=2026-01-31
   "success": true,
   "data": {
     "kpi": {
-      "totalSales": 450,
-      "totalBuyers": 320,
-      "totalRevenue": 20250000,
-      "averageOrderValue": 63281
+      "days": 30,
+      "sales": 20250000,
+      "items": 450,
+      "buyers": 320
     },
     "timeline": [
       {

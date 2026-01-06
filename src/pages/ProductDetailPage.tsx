@@ -7,7 +7,7 @@ import { ProductAnalyticsChart } from '../components/charts/ProductAnalyticsChar
 import { ReviewSummary } from '../components/reviews/ReviewSummary';
 import { ReviewWordCloud } from '../components/charts/ReviewWordCloud';
 import { useFilterStore } from '../store/useFilterStore';
-import { useProductStats } from '../hooks/useProducts';
+import { useDailySales } from '../hooks/useProducts';
 import { useReviews, useWordCloud } from '../hooks/useReviews';
 import { Package, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { WordCloudItem } from '../types/review';
@@ -23,7 +23,7 @@ export function ProductDetailPage() {
   const setRatingFilter = useFilterStore((state) => state.setRatingFilter);
   const clearFilters = useFilterStore((state) => state.clearFilters);
   
-  const { data: stats, isLoading } = useProductStats();
+  const { data: stats, isLoading } = useDailySales();
   const { data: reviews, isLoading: reviewsLoading } = useReviews();
   const { data: wordCloud, isLoading: wordCloudLoading } = useWordCloud();
 

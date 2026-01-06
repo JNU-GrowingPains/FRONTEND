@@ -4,7 +4,7 @@ export interface Customer {
   email: string;
   grade: '슈둥이' | '슈린이 GOLD' | '슈린이 PLATINUM' | '슈린이 VIP';
   points: number;
-  totalAmount: number;
+  totalSpent: number;
   purchaseCount: number;
   firstPurchaseDate: string;
   recentPurchaseDate: string;

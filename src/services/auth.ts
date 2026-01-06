@@ -76,14 +76,16 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     
     return { user, accessToken, refreshToken };
   } else {
-    // Production 모드 - 명세서 응답 형식에 맞게 파싱
+    // Production 모드 - JSON 형식 (Swagger 명세서 확인 완료)
     const response = await apiClient.post<{
       access_token: string;
       refresh_token: string;
       token_type: string;
-    }>(endpoints.auth.login, credentials);
+    }>(endpoints.auth.login, {
+      email: credentials.email,
+      password: credentials.password,
+    });
     
-    // 명세서는 로그인 응답에 user 정보를 반환하지 않음
     return {
       user: null,
       accessToken: response.access_token,
@@ -171,13 +173,7 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
       email: string;
     }>(endpoints.auth.register, registerData);
     
-    // 회원가입 후 자동 로그인을 위해 로그인 호출
-    const loginResponse = await login({
-      email: data.email,
-      password: data.password,
-    });
-    
-    // 회원가입 정보와 로그인 토큰 결합
+    // 회원가입 성공 - 자동 로그인 없이 user 정보만 반환
     return {
       user: {
         id: String(response.customer_id),
@@ -191,8 +187,8 @@ export async function signup(data: SignupData): Promise<AuthResponse> {
         businessCategory: data.businessCategory,
         createdAt: new Date(),
       },
-      accessToken: loginResponse.accessToken,
-      refreshToken: loginResponse.refreshToken,
+      accessToken: '',
+      refreshToken: '',
     };
   }
 }
@@ -277,28 +273,46 @@ export async function refreshToken(refreshToken: string): Promise<{
 }
 
 /**
- * 현재 사용자 정보 조회 (명세서에 없음, 기존 기능 유지)
+ * 현재 사용자 정보 조회
+ * 명세서: GET /api/v1/management/profile
  */
-export async function getCurrentUser(accessToken?: string): Promise<User> {
+export async function getCurrentUser(): Promise<User> {
   if (config.apiMode === 'mock') {
     // Mock 모드
     await delay(config.mockDelay);
-    
-    const token = accessToken || '';
-    if (!token || !token.startsWith('mock-jwt-token')) {
-      throw new Error('유효하지 않은 토큰입니다.');
-    }
-    
     return mockUsers[0];
   } else {
-    // Production 모드 - 명세서에 /auth/me가 없으므로 에러 반환
-    // 실제 구현 시에는 별도 엔드포인트가 필요할 수 있음
-    throw new Error('사용자 정보 조회 기능은 현재 지원되지 않습니다.');
+    // Production 모드 - 실제 API 규격: { customer_id, name, email, site_name, created_at }
+    console.log('GET profile 요청 시작');
+    const response = await apiClient.get<any>(endpoints.management.profile);
+    console.log('GET profile 응답:', response);
+    
+    // name을 firstName과 lastName으로 분리 (한국식: "성 이름")
+    const nameParts = (response.name || '').split(' ');
+    const lastName = nameParts.length > 1 ? nameParts[0] : '';
+    const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : response.name;
+    
+    return {
+      id: String(response.customer_id || ''),
+      email: response.email || '',
+      name: firstName || response.name || '',
+      lastName: lastName || '',
+      siteType: '', // API에서 제공하지 않음
+      siteName: response.site_name || '',
+      siteUrl: '', // API에서 제공하지 않음
+      timezone: '', // API에서 제공하지 않음
+      businessCategory: '', // API에서 제공하지 않음
+      createdAt: response.created_at ? new Date(response.created_at) : new Date(),
+      phone: '', // API에서 제공하지 않음 (UI에서 제거됨)
+      storeDescription: '', // API에서 제공하지 않음 (UI에서 제거됨)
+      businessNumber: '', // API에서 제공하지 않음 (UI에서 제거됨)
+    };
   }
 }
 
 /**
  * 프로필 정보 업데이트
+ * 명세서: PUT /api/v1/management/profile
  */
 export async function updateProfile(data: UpdateProfileData): Promise<User> {
   if (config.apiMode === 'mock') {
@@ -316,7 +330,66 @@ export async function updateProfile(data: UpdateProfileData): Promise<User> {
     
     return user;
   } else {
+    // Production 모드 - API는 오직 'name' 필드만 받음
+    // firstName과 lastName을 합쳐서 전송 (한국식: "성 이름")
+    const fullName = data.lastName 
+      ? `${data.lastName} ${data.name}`.trim()
+      : data.name || '';
+    
+    if (!fullName) {
+      throw new Error('이름을 입력해주세요.');
+    }
+    
+    console.log('프로필 업데이트 요청:', { name: fullName });
+    
+    // API 요청: { name: "홍길동" }
+    const response = await apiClient.put<any>(endpoints.management.updateProfile, {
+      name: fullName
+    });
+    
+    console.log('프로필 업데이트 응답:', response);
+    
+    // API 응답: { success, message, updated_data: { customer_id, name, email, site_name, created_at } }
+    const updatedData = response.updated_data || response;
+    
+    // name을 firstName과 lastName으로 분리
+    const nameParts = (updatedData.name || fullName).split(' ');
+    const lastName = nameParts.length > 1 ? nameParts[0] : '';
+    const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : updatedData.name;
+    
+    return {
+      id: String(updatedData.customer_id || ''),
+      email: updatedData.email || '',
+      name: firstName || updatedData.name || '',
+      lastName: lastName || '',
+      siteType: data.siteType || '', // 로컬에서 유지
+      siteName: updatedData.site_name || data.siteName || '',
+      siteUrl: data.siteUrl || '', // 로컬에서 유지
+      timezone: data.timezone || '', // 로컬에서 유지
+      businessCategory: data.businessCategory || '', // 로컬에서 유지
+      createdAt: updatedData.created_at ? new Date(updatedData.created_at) : new Date(),
+      phone: data.phone || '', // 로컬에서 유지 (사용 안함)
+      storeDescription: data.storeDescription || '', // 로컬에서 유지 (사용 안함)
+      businessNumber: data.businessNumber || '', // 로컬에서 유지 (사용 안함)
+    };
+  }
+}
+
+/**
+ * 대시보드 통계 조회
+ * 명세서: GET /api/v1/management/dashboard-stats
+ */
+export async function getDashboardStats(): Promise<any> {
+  if (config.apiMode === 'mock') {
+    // Mock 모드
+    await delay(config.mockDelay);
+    return {
+      total_products: 15,
+      total_customers: 128,
+      monthly_revenue: 5200000,
+    };
+  } else {
     // Production 모드
-    return await apiClient.put<User>(endpoints.account.updateProfile, data);
+    return await apiClient.get<any>(endpoints.management.dashboardStats);
   }
 }

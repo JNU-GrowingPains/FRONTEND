@@ -48,19 +48,36 @@ class ApiClient {
   }
 
   /**
-   * 요청 헤더 생성 (동적으로 토큰 가져오기)
+   * 토큰이 필요한 엔드포인트 확인
    */
-  private getHeaders(): HeadersInit {
+  private needsAuth(endpoint: string, method: string): boolean {
+    const authRequiredEndpoints = [
+      { endpoint: '/api/v1/management/profile', methods: ['GET', 'PUT'] },
+      { endpoint: '/api/v1/management/dashboard-stats', methods: ['GET'] },
+      { endpoint: '/auth/logout', methods: ['POST'] },
+    ];
+    
+    return authRequiredEndpoints.some(
+      (item) => endpoint === item.endpoint && item.methods.includes(method.toUpperCase())
+    );
+  }
+
+  /**
+   * 요청 헤더 생성 (특정 엔드포인트에만 토큰 포함)
+   */
+  private getHeaders(endpoint: string, method: string): HeadersInit {
     const headers: Record<string, string> = { ...this.baseHeaders } as Record<string, string>;
     
-    // Zustand store에서 토큰 가져오기 (동적)
-    try {
-      const accessToken = useAuthStore.getState().accessToken;
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
+    // 토큰이 필요한 엔드포인트인 경우에만 Authorization 헤더 추가
+    if (this.needsAuth(endpoint, method)) {
+      try {
+        const accessToken = useAuthStore.getState().accessToken;
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+      } catch (error) {
+        // store가 아직 초기화되지 않은 경우 무시
       }
-    } catch (error) {
-      // store가 아직 초기화되지 않은 경우 무시
     }
     
     return headers as HeadersInit;
@@ -75,85 +92,163 @@ class ApiClient {
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          url.searchParams.append(key, String(value));
+          // 배열인 경우 FastAPI 스타일로 여러 번 append
+          // 예: product_ids=[15, 40] -> ?product_ids=15&product_ids=40
+          if (Array.isArray(value)) {
+            value.forEach(item => {
+              url.searchParams.append(key, String(item));
+            });
+          } else {
+            url.searchParams.append(key, String(value));
+          }
         }
       });
     }
 
-    const response = await fetch(url.toString(), {
+    const makeRequest = () => fetch(url.toString(), {
       method: 'GET',
-      headers: this.getHeaders(),
+      headers: this.getHeaders(endpoint, 'GET'),
       signal: AbortSignal.timeout(config.apiTimeout),
     });
 
-    return this.handleResponse<T>(response);
+    const response = await makeRequest();
+    return this.handleResponse<T>(response, makeRequest);
   }
 
   /**
    * POST 요청
    */
   async post<T>(endpoint: string, data?: any): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = () => fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers: this.getHeaders(endpoint, 'POST'),
       body: data ? JSON.stringify(data) : undefined,
       signal: AbortSignal.timeout(config.apiTimeout),
     });
 
-    return this.handleResponse<T>(response);
+    const response = await makeRequest();
+    return this.handleResponse<T>(response, makeRequest);
   }
 
   /**
    * PUT 요청
    */
   async put<T>(endpoint: string, data?: any): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = () => fetch(`${this.baseUrl}${endpoint}`, {
       method: 'PUT',
-      headers: this.getHeaders(),
+      headers: this.getHeaders(endpoint, 'PUT'),
       body: data ? JSON.stringify(data) : undefined,
       signal: AbortSignal.timeout(config.apiTimeout),
     });
 
-    return this.handleResponse<T>(response);
+    const response = await makeRequest();
+    return this.handleResponse<T>(response, makeRequest);
   }
 
   /**
    * DELETE 요청
    */
   async delete<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = () => fetch(`${this.baseUrl}${endpoint}`, {
       method: 'DELETE',
-      headers: this.getHeaders(),
+      headers: this.getHeaders(endpoint, 'DELETE'),
       signal: AbortSignal.timeout(config.apiTimeout),
     });
 
-    return this.handleResponse<T>(response);
+    const response = await makeRequest();
+    return this.handleResponse<T>(response, makeRequest);
   }
 
   /**
-   * 응답 처리
+   * 응답 처리 (자동 토큰 갱신 포함)
    */
-  private async handleResponse<T>(response: Response): Promise<T> {
+  private async handleResponse<T>(response: Response, retryRequest?: () => Promise<Response>): Promise<T> {
     if (!response.ok) {
-      // 401 Unauthorized 에러 처리
-      if (response.status === 401) {
+      // 401 Unauthorized 에러 처리 (토큰 갱신 시도)
+      if (response.status === 401 && retryRequest) {
         try {
-          useAuthStore.getState().logout();
-          // 로그인 페이지로 리다이렉트 (window.location은 브라우저에서만 사용 가능)
-          if (typeof window !== 'undefined') {
-            window.location.href = '/';
-            // 리다이렉트 후 함수 종료 (에러 throw 안 함)
-            return Promise.reject(new Error('Unauthorized - Redirecting to login'));
+          console.log('401 에러 발생 - 토큰 갱신 시도');
+          const currentRefreshToken = useAuthStore.getState().refreshToken;
+          
+          if (currentRefreshToken) {
+            // 토큰 갱신 API 호출 (순환 참조 방지를 위해 직접 fetch 사용)
+            const refreshResponse = await fetch(`${this.baseUrl}${endpoints.auth.refresh}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refresh_token: currentRefreshToken }),
+            });
+            
+            if (refreshResponse.ok) {
+              const tokens = await refreshResponse.json();
+              console.log('토큰 갱신 성공');
+              
+              // 새 토큰을 store에 저장
+              const { login } = useAuthStore.getState();
+              const currentUser = useAuthStore.getState().user;
+              if (currentUser) {
+                login(currentUser, tokens.access_token, tokens.refresh_token);
+              }
+              
+              // 원래 요청 재시도
+              const retryResponse = await retryRequest();
+              return this.handleResponse<T>(retryResponse);
+            } else {
+              console.log('토큰 갱신 실패 - 로그아웃 처리');
+              throw new Error('Token refresh failed');
+            }
+          } else {
+            console.log('Refresh Token 없음 - 로그아웃 처리');
+            throw new Error('No refresh token');
           }
         } catch (error) {
-          // store 접근 실패 시 무시
+          console.error('토큰 갱신 중 에러:', error);
+          // 토큰 갱신 실패 시 로그아웃 및 리다이렉트
+          useAuthStore.getState().logout();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+          return Promise.reject(new Error('Unauthorized - Redirecting to login'));
+        }
+      } else if (response.status === 401) {
+        // retryRequest가 없으면 (토큰 갱신 API 자체가 실패한 경우) 바로 로그아웃
+        try {
+          useAuthStore.getState().logout();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+        } catch (error) {
           console.error('Failed to handle 401 error:', error);
         }
+        return Promise.reject(new Error('Unauthorized - Redirecting to login'));
       }
 
       const errorData = await response.json().catch(() => ({}));
+      
+      // 사용자 친화적인 에러 메시지
+      let userMessage = errorData.detail || errorData.message;
+      if (!userMessage) {
+        switch (response.status) {
+          case 400:
+            userMessage = '잘못된 요청입니다. 입력 정보를 확인해주세요.';
+            break;
+          case 403:
+            userMessage = '접근 권한이 없습니다.';
+            break;
+          case 404:
+            userMessage = '요청한 데이터를 찾을 수 없습니다.';
+            break;
+          case 500:
+            userMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            break;
+          default:
+            userMessage = '요청 처리 중 오류가 발생했습니다.';
+        }
+      }
+      
       throw new ApiError(
-        errorData.message || '요청 처리 중 오류가 발생했습니다.',
+        userMessage,
         response.status,
         errorData.code
       );
@@ -204,18 +299,22 @@ export const endpoints = {
     logout: '/auth/logout',
   },
   
+  // 고객 분석 (명세서: member-analysis)
+  memberAnalysis: {
+    gradeStats: '/api/v1/member-analysis/grade-stats',
+    topMembers: '/api/v1/member-analysis/top-members',
+    members: '/api/v1/member-analysis/members',
+  },
+  
   // 상품 분석
   productAnalysis: {
     products: '/api/v1/product-analysis/products',
-    stats: '/api/v1/product-analysis/stats',
+    stats: '/api/v1/product-analysis/stats', // Query parameter 방식
+    productStats: (productId: string) => `/api/v1/product-analysis/products/${productId}/stats`, // RESTful 방식
     chartTrend: '/api/v1/product-analysis/chart/trend',
-  },
-  
-  // 고객 분석
-  customerAnalysis: {
-    kpis: '/api/v1/customer-analysis/kpis',
-    grades: '/api/v1/customer-analysis/grades',
-    list: '/api/v1/customer-analysis/list',
+    reviewStats: (productId: string) => `/api/v1/product-analysis/products/${productId}/review-stats`,
+    reviewKeywords: (productId: string) => `/api/v1/product-analysis/products/${productId}/review-keywords`,
+    reviews: (productId: string) => `/api/v1/product-analysis/products/${productId}/reviews`,
   },
   
   // 리뷰 분석
@@ -232,11 +331,10 @@ export const endpoints = {
     customers: '/api/v1/repurchase-analysis/customers',
   },
   
-  // 계정 (명세서에 없지만 기존 기능 유지)
-  account: {
-    profile: '/account/profile',
-    updateProfile: '/account/profile',
-    changePassword: '/account/password',
-    deleteAccount: '/account',
+  // 개인정보 관리
+  management: {
+    profile: '/api/v1/management/profile',
+    updateProfile: '/api/v1/management/profile',
+    dashboardStats: '/api/v1/management/dashboard-stats',
   },
 } as const;

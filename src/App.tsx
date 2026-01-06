@@ -58,16 +58,33 @@ function AppContent() {
       const currentRefreshToken = state.refreshToken;
       const currentUser = state.user;
       
-      // accessToken과 user가 모두 있으면 로그인 상태 유지
-      // 명세서에 /auth/me 엔드포인트가 없으므로 토큰 검증은 생략
-      if (currentAccessToken && currentUser) {
-        // 이미 로그인 상태로 간주
-        setIsInitializing(false);
-      } else if (currentAccessToken && !currentUser) {
-        // 토큰은 있지만 user 정보가 없는 경우 (예: 로그인 직후)
-        // 명세서에 user 정보 조회 엔드포인트가 없으므로 로그아웃 처리
-        console.warn('토큰은 있지만 사용자 정보가 없습니다. 로그아웃합니다.');
-        logout();
+      // accessToken이 있으면 로그인 상태 유지
+      if (currentAccessToken) {
+        // user 정보가 없으면 프로필 조회 시도
+        if (!currentUser) {
+          try {
+            console.log('사용자 정보를 조회합니다...');
+            const user = await authService.getCurrentUser();
+            state.updateUser(user);
+            console.log('사용자 정보 조회 성공:', user);
+          } catch (error) {
+            // 프로필 조회 실패 시에도 토큰이 있으면 로그인 상태 유지
+            console.warn('프로필 조회 실패, 기본 정보로 로그인 상태 유지:', error);
+            // 기본 user 정보 설정
+            state.updateUser({
+              id: 'unknown',
+              email: '',
+              name: '사용자',
+              lastName: '',
+              siteType: '',
+              siteName: '',
+              siteUrl: '',
+              timezone: '',
+              businessCategory: '',
+              createdAt: new Date(),
+            });
+          }
+        }
         setIsInitializing(false);
       } else {
         // 토큰이 없는 경우

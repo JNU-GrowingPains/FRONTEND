@@ -407,10 +407,10 @@ import { ProductSummaryCards } from './components/products/ProductSummaryCards';
 
 <ProductSummaryCards
   kpi={{
-    totalSales: 450,
-    totalBuyers: 320,
-    totalRevenue: 20250000,
-    averageOrderValue: 63281,
+    days: 30,
+    sales: 20250000,
+    items: 450,
+    buyers: 320,
   }}
 />
 ```
@@ -419,10 +419,10 @@ import { ProductSummaryCards } from './components/products/ProductSummaryCards';
 ```typescript
 interface ProductSummaryCardsProps {
   kpi: {
-    totalSales: number;
-    totalBuyers: number;
-    totalRevenue: number;
-    averageOrderValue: number;
+    days: number;     // 조회 기간 (일)
+    sales: number;    // 총 매출액 (원)
+    items: number;    // 총 판매 수량 (개)
+    buyers: number;   // 총 구매자 수 (명)
   };
 }
 ```

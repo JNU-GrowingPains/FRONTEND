@@ -12,8 +12,42 @@ export const useLogin = () => {
   const login = useAuthStore((state) => state.login);
 
   return useMutation({
-    mutationFn: (credentials: LoginCredentials) => authService.login(credentials),
+    mutationFn: async (credentials: LoginCredentials) => {
+      // 로그인 후 프로필 조회까지 함께 처리
+      const authData = await authService.login(credentials);
+      
+      let user = authData.user;
+      if (!user) {
+        try {
+          console.log('프로필 조회 중...');
+          user = await authService.getCurrentUser();
+          console.log('프로필 조회 성공:', user);
+        } catch (error) {
+          console.error('프로필 조회 실패:', error);
+          // 프로필 조회 실패 시 에러를 throw하지 않고 기본값 사용
+          user = {
+            id: 'unknown',
+            email: credentials.email,
+            name: '사용자',
+            lastName: '',
+            siteType: '',
+            siteName: '쇼핑몰',
+            siteUrl: '',
+            timezone: '',
+            businessCategory: '',
+            createdAt: new Date(),
+          };
+        }
+      }
+      
+      return {
+        user,
+        accessToken: authData.accessToken,
+        refreshToken: authData.refreshToken,
+      };
+    },
     onSuccess: (data) => {
+      // 토큰과 user 정보 함께 저장
       login(data.user, data.accessToken, data.refreshToken);
       toast.success('로그인 되었습니다.');
     },
@@ -24,13 +58,10 @@ export const useLogin = () => {
 };
 
 export const useSignup = () => {
-  const login = useAuthStore((state) => state.login);
-
   return useMutation({
     mutationFn: (data: SignupData) => authService.signup(data),
-    onSuccess: (data) => {
-      login(data.user, data.accessToken, data.refreshToken);
-      toast.success('회원가입이 완료되었습니다.');
+    onSuccess: () => {
+      toast.success('회원가입이 완료되었습니다. 로그인해주세요.');
     },
     onError: (error: Error) => {
       toast.error(error.message || '회원가입에 실패했습니다.');

@@ -36,7 +36,14 @@ export function SignupPage({ onNavigateToLogin }: SignupPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    signupMutation.mutate(formData);
+    signupMutation.mutate(formData, {
+      onSuccess: () => {
+        // 회원가입 성공 시 로그인 페이지로 이동
+        setTimeout(() => {
+          onNavigateToLogin();
+        }, 1500);
+      },
+    });
   };
 
   const updateField = (field: string, value: string | boolean) => {

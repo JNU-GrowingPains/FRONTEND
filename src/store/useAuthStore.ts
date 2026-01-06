@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState>()(
         })),
       updateUser: (userData) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null,
+          user: state.user ? { ...state.user, ...userData } : (userData as User),
         })),
     }),
     {
@@ -52,10 +52,10 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
       }),
-      // 복원 시 accessToken과 user가 모두 있을 때만 isAuthenticated를 true로 설정
+      // 복원 시 accessToken이 있으면 isAuthenticated를 true로 설정
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state.isAuthenticated = !!(state.accessToken && state.user);
+          state.isAuthenticated = !!state.accessToken;
         }
       },
     }
