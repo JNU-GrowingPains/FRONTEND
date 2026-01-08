@@ -227,10 +227,8 @@ export async function getRepurchaseCustomers(params?: {
         return {
           userId: customer.user_id,
           customerId: customer.customer_id || '',
-          // 백엔드에서 customer_id가 "비회원"인 경우, "이름|주소" 형식으로 고유 ID 생성
-          id: customer.customer_id === '비회원' || !customer.customer_id || customer.customer_id === 'null'
-            ? `${customer.name}|${customer.address}`
-            : customer.customer_id,
+          // 백엔드가 제공하는 customer_key를 사용 (회원/비회원 모두 고유 식별자)
+          id: customer.customer_key || customer.customer_id,
           name: customer.name || '',
           email: customer.email || '',
           phone: customer.phone || '',

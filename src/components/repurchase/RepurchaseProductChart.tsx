@@ -14,6 +14,24 @@ export function RepurchaseProductChart({ data }: RepurchaseProductChartProps) {
     return name;
   };
 
+  // 커스텀 툴팁: 상품명만 표시
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length > 0) {
+      return (
+        <div style={{
+          backgroundColor: 'white',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        }}>
+          <p className="text-sm text-gray-900">{payload[0].payload.productName}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
       <div className="mb-4">
@@ -48,7 +66,7 @@ export function RepurchaseProductChart({ data }: RepurchaseProductChartProps) {
               tickFormatter={formatProductName}
             />
             <Tooltip
-              content={() => null}
+              content={<CustomTooltip />}
               cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }}
             />
             <Bar 

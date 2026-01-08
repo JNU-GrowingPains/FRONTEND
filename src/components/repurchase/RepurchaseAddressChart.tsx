@@ -71,7 +71,7 @@ export function RepurchaseAddressChart({ data }: RepurchaseAddressChartProps) {
           <Tooltip
             formatter={(value: number, name, props: any) => [
               `${value}건 (${props.payload.percentage.toFixed(1)}%)`,
-              '재구매 수',
+              props.payload.address,
             ]}
             contentStyle={{
               backgroundColor: 'white',
