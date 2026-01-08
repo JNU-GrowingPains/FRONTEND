@@ -36,26 +36,32 @@ export const useDailySales = () => {
     queryFn: async () => {
       if (!selectedProductId) return [];
       
-      // 날짜 범위를 일수로 변환
-      const days = Math.ceil(
-        (dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      // 날짜를 YYYY-MM-DD 형식으로 변환
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
       
-      // 최소 7일, 최대 90일로 제한하고 넉넉하게 가져오기
-      const apiDays = Math.max(7, Math.min(days + 7, 90));
+      const from_date = formatDate(dateRange.start);
+      const to_date = formatDate(dateRange.end);
       
-      // 3개의 metric을 모두 병렬로 호출
+      // 3개의 metric을 모두 병렬로 호출 (from_date, to_date 전달)
       const [revenueData, salesData, buyersData] = await Promise.all([
         productService.getDailySales(selectedProductId, {
-          days: apiDays,
+          from_date,
+          to_date,
           metric: 'amount', // 매출액
         }),
         productService.getDailySales(selectedProductId, {
-          days: apiDays,
+          from_date,
+          to_date,
           metric: 'quantity', // 판매 수량
         }),
         productService.getDailySales(selectedProductId, {
-          days: apiDays,
+          from_date,
+          to_date,
           metric: 'buyers', // 구매자 수
         }),
       ]);
@@ -126,6 +132,7 @@ export const useDailySales = () => {
       }
       
       console.log('=== 병합된 차트 데이터 ===');
+      console.log('날짜 범위:', from_date, '~', to_date);
       console.log('총', result.length, '건');
       if (result.length > 0) {
         console.log('첫 번째 샘플:', result[0]);

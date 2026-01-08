@@ -17,6 +17,10 @@ export function RepurchaseAnalysisPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('product'); // 초기값을 'product'로 설정
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   
+  // 필터 및 정렬 상태 추가
+  const [gradeFilter, setGradeFilter] = useState<string | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<'latest_repurchase' | 'purchase_count' | 'points' | 'name'>('latest_repurchase');
+  
   // API로 재구매 상품 목록 조회
   const { data: repurchaseProducts, isLoading: productsLoading } = useRepurchaseProducts();
   
@@ -25,9 +29,11 @@ export function RepurchaseAnalysisPage() {
     selectedProductIds.length > 0 ? selectedProductIds : undefined
   );
 
-  // API로 재구매 고객 목록 조회
+  // API로 재구매 고객 목록 조회 - grade와 sort_by 추가
   const { data: customersData, isLoading: customersLoading } = useRepurchaseCustomers({
     product_ids: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+    grade: gradeFilter,
+    sort_by: sortBy,
   });
   
   // 재구매 상품 목록 로그 출력
@@ -221,6 +227,10 @@ export function RepurchaseAnalysisPage() {
                 customers={customersData}
                 onCustomerClick={handleCustomerClick}
                 selectedCustomerId={selectedCustomerId}
+                gradeFilter={gradeFilter}
+                sortBy={sortBy}
+                onGradeFilterChange={setGradeFilter}
+                onSortByChange={setSortBy}
               />
 
               {/* 고객 선택 시 그래프 표시 */}

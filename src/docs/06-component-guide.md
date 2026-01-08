@@ -445,17 +445,18 @@ interface ProductSummaryCardsProps {
 
 ### RepurchaseKPICards
 
-재구매 주요 지표를 카드로 표시
+재구매 주요 지표를 5개의 카드로 표시
 
 ```typescript
 import { RepurchaseKPICards } from './components/repurchase/RepurchaseKPICards';
 
 <RepurchaseKPICards
   kpi={{
-    repurchaseRate: 65.5,
-    averageRepurchaseDays: 42,
-    repurchaseCustomers: 120,
-    repurchaseCycle: 35,
+    totalRepurchaseCount: 100,
+    avgRepurchaseRate: 4.8,
+    avgRepurchaseDays: 62,
+    sameProductRate: 62.9,
+    salesContribution: 2.4,
   }}
 />
 ```
@@ -464,62 +465,118 @@ import { RepurchaseKPICards } from './components/repurchase/RepurchaseKPICards';
 ```typescript
 interface RepurchaseKPICardsProps {
   kpi: {
-    repurchaseRate: number;          // 재구매율 (%)
-    averageRepurchaseDays: number;   // 평균 재구매 기간 (일)
-    repurchaseCustomers: number;     // 재구매 고객 수
-    repurchaseCycle: number;         // 재구매 주기 (일)
+    totalRepurchaseCount: number;    // 총 재구매 고객 수
+    avgRepurchaseRate: number;       // 평균 재구매율 (%)
+    avgRepurchaseDays: number;       // 평균 재구매 소요 기간 (일)
+    sameProductRate: number;         // 동일 상품 재구매 비율 (%)
+    salesContribution: number;       // 재구매 고객 매출 기여도 (%)
   };
 }
 ```
 
+**특징:**
+- 실시간 API 데이터 연동
+- 상품 선택에 따라 동적으로 KPI 계산
+  - 상품 미선택: 전체 평균
+  - 단일 상품: 해당 상품 KPI
+  - 복수 상품: 교차 재구매 포함 평균
+- 로딩 및 에러 상태 처리
+
 ### RepurchaseCustomerTable
 
-재구매 고객 목록을 테이블로 표시
+재구매 고객 목록을 테이블로 표시 (회원/비회원 통합)
 
 ```typescript
 import { RepurchaseCustomerTable } from './components/repurchase/RepurchaseCustomerTable';
 
 <RepurchaseCustomerTable
   customers={repurchaseCustomers}
-  onCustomerClick={(customerId) => console.log(customerId)}
+  onCustomerClick={(customerId) => setSelectedCustomerId(customerId)}
   selectedCustomerId={selectedCustomerId}
 />
 ```
 
+**Props:**
+```typescript
+interface RepurchaseCustomer {
+  id: string;                    // 회원: "숫자@문자", 비회원: "이름|주소"
+  userId: number | null;         // 회원 ID (비회원은 null)
+  customerId: string;            // 고객 식별자
+  name: string;                  // 고객명
+  grade: string;                 // 등급 (회원: "슈둥이", 비회원: "전체")
+  purchaseCount: number;         // 구매 횟수
+  address: string;               // 주소
+  phone: string;                 // 연락처
+  email: string;                 // 이메일 (비회원: "-")
+  points: number;                // 적립금
+  averageRepurchaseDays: number; // 평균 재구매 기간
+}
+```
+
 **특징:**
-- 고객 클릭 시 상세 정보 표시
-- 재구매 횟수, 평균 재구매 기간, 등급 표시
+- 회원/비회원 구분 표시
+- 고유 key 사용으로 React 렌더링 최적화
+- 고객 클릭 시 상세 정보 로드
 - 선택된 고객 하이라이트
 
 ### RepurchaseProductChart
 
-고객별 재구매 상품을 차트로 시각화
+고객별 재구매 상품을 가로 막대 차트로 시각화
 
 ```typescript
 import { RepurchaseProductChart } from './components/repurchase/RepurchaseProductChart';
 
 <RepurchaseProductChart
-  data={[
-    { productName: '히알루론산 세럼', count: 5 },
-    { productName: '비타민C 세럼', count: 3 },
-  ]}
+  data={customerRepurchaseDetail.products}
 />
 ```
 
+**데이터 형식:**
+```typescript
+interface CustomerRepurchaseProduct {
+  productId: number;
+  productName: string;
+  repurchaseCount: number;
+  percentage: number;
+  firstPurchaseDate: string;
+  lastPurchaseDate: string;
+}
+```
+
+**특징:**
+- 가로 막대 그래프 (Horizontal Bar Chart)
+- 재구매 횟수와 비율 표시
+- 동적 높이 조정 (데이터 개수에 따라)
+- 빈 데이터 처리 (EmptyState)
+
 ### RepurchaseAddressChart
 
-지역별 재구매 배송지를 차트로 시각화
+지역별 재구매 배송지를 도넛 차트로 시각화
 
 ```typescript
 import { RepurchaseAddressChart } from './components/repurchase/RepurchaseAddressChart';
 
 <RepurchaseAddressChart
-  data={[
-    { address: '서울특별시', count: 45 },
-    { address: '경기도', count: 32 },
-  ]}
+  data={customerRepurchaseDetail.addresses}
 />
 ```
+
+**데이터 형식:**
+```typescript
+interface CustomerRepurchaseAddress {
+  address: string;
+  orderCount: number;
+  percentage: number;
+  firstOrderDate: string;
+  lastOrderDate: string;
+}
+```
+
+**특징:**
+- 도넛 차트 (Donut Chart)
+- 주소별 주문 비율 표시
+- 색상 구분으로 시각적 차별화
+- 툴팁으로 상세 정보 제공
 
 ## 👥 고객 관련 컴포넌트
 

@@ -2,8 +2,11 @@
 
 ## 📡 개요
 
-현재 **성장통 (Growth Analytics)** 프로젝트는 Mock 데이터로 동작합니다.
-이 문서는 실제 백엔드 API와 연동하는 방법을 단계별로 설명합니다.
+**성장통 (Growth Analytics)** 프로젝트는 실제 백엔드 API와 연동되어 있습니다.
+이 문서는 API 엔드포인트 명세와 연동 방법을 설명합니다.
+
+**API Base URL:** `http://172.20.10.4:8000`
+**API Timeout:** 60초 (재구매 상세 API는 처리 시간이 길 수 있음)
 
 ---
 
@@ -452,7 +455,183 @@ GET /api/customers/top?limit=3&sortBy=points
 }
 ```
 
-### 3. 리뷰 관련 API
+### 3. 재구매 분석 API
+
+#### GET /api/v1/repurchase-analysis/products
+재구매 분석용 상품 목록 조회
+
+**Request:**
+```http
+GET /api/v1/repurchase-analysis/products
+```
+
+**Response:**
+```json
+[
+  {
+    "product_id": 10,
+    "product_name": "리쥬 카밍 PDRN 버블토너 100ml",
+    "price": 28000,
+    "repurchase_rate": 65.5
+  },
+  {
+    "product_id": 15,
+    "product_name": "리쥬 카밍 PDRN 피부과 쌩얼 파데프리 크림 30ml",
+    "price": 32000,
+    "repurchase_rate": 58.3
+  }
+]
+```
+
+**구현 위치:** `/services/repurchase.ts` - `getRepurchaseProducts()`
+
+#### GET /api/v1/repurchase-analysis/kpis
+재구매 KPI 조회
+
+**Request:**
+```http
+GET /api/v1/repurchase-analysis/kpis?product_ids=10&product_ids=15
+```
+
+**Query Parameters:**
+- `product_ids` (number[], optional): 분석할 상품 ID 배열
+  - 없으면: 전체 상품 평균 KPI 반환
+  - 1개: 해당 상품의 재구매 KPI
+  - 2개 이상: 교차 재구매 포함한 평균 KPI
+    - 예: A→A 재구매, A→B 재구매, B→B 재구매 모두 포함
+
+**Response:**
+```json
+{
+  "total_repurchase_count": 100,
+  "avg_repurchase_rate": 4.8,
+  "avg_repurchase_days": 62,
+  "same_product_rate": 62.9,
+  "sales_contribution": 2.4
+}
+```
+
+**필드 설명:**
+- `total_repurchase_count`: 총 재구매 고객 수
+- `avg_repurchase_rate`: 평균 재구매율 (%)
+- `avg_repurchase_days`: 평균 재구매 소요 기간 (일)
+- `same_product_rate`: 동일 상품 재구매 비율 (%)
+- `sales_contribution`: 재구매 고객 매출 기여도 (%)
+
+**구현 위치:** `/services/repurchase.ts` - `getRepurchaseKPIs()`
+
+#### GET /api/v1/repurchase-analysis/customers
+재구매 고객 목록 조회
+
+**Request:**
+```http
+GET /api/v1/repurchase-analysis/customers?product_ids=10&product_ids=15&page=1&limit=50
+```
+
+**Query Parameters:**
+- `product_ids` (number[], optional): 분석할 상품 ID 배열
+- `page` (number, optional): 페이지 번호 (기본값: 1)
+- `limit` (number, optional): 페이지당 항목 수 (기본값: 0 = 전체)
+
+**Response:**
+```json
+{
+  "total_count": 115,
+  "page": 1,
+  "limit": 0,
+  "items": [
+    {
+      "user_id": 705,
+      "customer_id": "4411019966@k",
+      "name": "전소현",
+      "grade": "슈둥이",
+      "purchase_count": "2회",
+      "address": "경기 수원시 영통구 광교로 286 광교 해모로 아파트 8003동 102호",
+      "phone": "010-8749-8799",
+      "email": "kbg940212@naver.com",
+      "point": "0P",
+      "avg_period": "98일"
+    },
+    {
+      "user_id": null,
+      "customer_id": "장수진|강원특별자치도 원주시 한지공원길 102",
+      "name": "장수진",
+      "grade": "전체",
+      "purchase_count": "2회",
+      "address": "강원특별자치도 원주시 한지공원길 102 한솔솔파크아파트 103동 501호",
+      "phone": "0502-4109-3560",
+      "email": "-",
+      "point": "0P",
+      "avg_period": "68일"
+    }
+  ]
+}
+```
+
+**비회원 처리:**
+- `user_id`가 `null`인 경우 비회원
+- `customer_id`는 비회원의 경우 "이름|주소" 형식
+- `grade`는 비회원의 경우 "전체"
+- `email`은 비회원의 경우 "-"
+
+**구현 위치:** `/services/repurchase.ts` - `getRepurchaseCustomers()`
+
+#### GET /api/v1/repurchase-analysis/customer/{customer_id}/detail
+고객별 재구매 상세 정보
+
+**Request:**
+```http
+GET /api/v1/repurchase-analysis/customer/{customer_id}/detail
+```
+
+**Path Parameters:**
+- `customer_id` (string, required): 고객 ID
+  - 회원: 숫자@문자 형식 (예: "4411019966@k")
+  - 비회원: "이름|주소" 형식 (예: "장수진|강원특별자치도 원주시...")
+
+**Response:**
+```json
+{
+  "customer": {
+    "customer_id": "장수진|강원특별자치도 원주시 한지공원길 102",
+    "name": "장수진",
+    "grade": "전체",
+    "point": 0,
+    "total_order_count": 2,
+    "avg_repurchase_days": 68,
+    "first_order_date": "2023-03-15",
+    "last_order_date": "2023-05-22"
+  },
+  "products": [
+    {
+      "product_id": 10,
+      "product_name": "리쥬 카밍 PDRN 버블토너 100ml",
+      "repurchase_count": 3,
+      "percentage": 75,
+      "first_purchase_date": "2023-03-15",
+      "last_purchase_date": "2023-08-18"
+    }
+  ],
+  "addresses": [
+    {
+      "address": "강원특별자치도 원주시 한지공원길 102 한솔솔파크아파트 103동 501호",
+      "order_count": 2,
+      "percentage": 100,
+      "first_order_date": "2023-03-15",
+      "last_order_date": "2023-05-22"
+    }
+  ]
+}
+```
+
+**주의사항:**
+- API 응답 시간이 최대 60초까지 소요될 수 있음
+- `products` 배열이 비어있을 수 있음 (재구매가 없는 경우)
+- URL 인코딩 필요 (특히 비회원 ID)
+
+**구현 위치:** `/services/repurchase.ts` - `getCustomerRepurchaseDetail()`
+
+### 4. 리뷰 관련 API
 
 #### GET /api/products/:productId/reviews
 특정 상품의 리뷰 목록

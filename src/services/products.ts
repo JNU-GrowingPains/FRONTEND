@@ -158,7 +158,7 @@ export async function getProductStats(
 /**
  * 상품 트렌드 차트 데이터 조회
  * 명세서: GET /api/v1/product-analysis/chart/trend
- * Query Parameters: days, metric, product_id
+ * Query Parameters: days, metric, product_id, from_date, to_date
  * metric: 'amount' (매출액), 'quantity' (판매 수량), 'buyers' (구매자 수)
  * 응답: [{ date: "2025-01-01", value: 450000 }, ...]
  */
@@ -167,6 +167,8 @@ export async function getDailySales(
   params?: {
     days?: number;
     metric?: 'amount' | 'quantity' | 'buyers';
+    from_date?: string;
+    to_date?: string;
   }
 ): Promise<ProductStats[]> {
   if (config.apiMode === 'mock') {
@@ -177,17 +179,28 @@ export async function getDailySales(
   } else {
     // Production 모드
     try {
+      // Query 파라미터 구성
+      const queryParams: any = {
+        product_id: parseInt(productId),
+        metric: params?.metric || 'amount',
+      };
+      
+      // from_date, to_date가 있으면 우선 사용 (달력 선택)
+      if (params?.from_date && params?.to_date) {
+        queryParams.from_date = params.from_date;
+        queryParams.to_date = params.to_date;
+      } else {
+        // 없으면 days 사용 (최근 N일)
+        queryParams.days = params?.days || 30;
+      }
+      
       const response = await apiClient.get<any>(
         endpoints.productAnalysis.chartTrend,
-        {
-          product_id: parseInt(productId),
-          days: params?.days || 30,
-          metric: params?.metric || 'amount',
-        }
+        queryParams
       );
       console.log('=== 상품 트렌드 차트 API 호출 ===');
       console.log('상품 ID:', productId);
-      console.log('파라미터:', params);
+      console.log('파라미터:', queryParams);
       console.log('원본 응답:', response);
       
       // API 응답: [{ date: "2025-01-01", value: 450000 }, ...]

@@ -14,14 +14,25 @@
 로컬 개발 환경 설정, 개발 워크플로우, 코딩 컨벤션 등을 안내합니다.
 
 ### [4. API 연동 가이드](./04-api-integration.md)
-Mock 데이터를 실제 API로 전환하는 상세 방법과 전체 API 엔드포인트 명세를 제공합니다.
-**인증 API, 상품 API, 고객 API, 리뷰 API 포함**
+실제 백엔드 API 연동 방법과 전체 API 엔드포인트 명세를 제공합니다.
+**인증 API, 재구매 분석 API, 상품 API, 고객 API, 리뷰 API 포함**
+- 재구매 분석 API (실제 연동 완료)
+- API 타임아웃 설정 (60초)
+- 비회원 고객 처리 방법
 
 ### [5. 상태 관리 가이드](./05-state-management.md)
 Zustand와 TanStack Query를 활용한 상태 관리 방법을 설명합니다.
+- 재구매 분석 Hooks (useRepurchaseProducts, useRepurchaseKPIs, useRepurchaseCustomers, useCustomerRepurchaseDetail)
+- 조건부 쿼리 실행 (enabled 옵션)
+- 캐싱 전략 및 재시도 설정
 
 ### [6. 컴포넌트 가이드](./06-component-guide.md)
 재사용 가능한 컴포넌트들의 사용법과 커스터마이징 방법을 안내합니다.
+**재구매 분석 컴포넌트:**
+- RepurchaseKPICards (5개 주요 지표)
+- RepurchaseCustomerTable (회원/비회원 통합)
+- RepurchaseProductChart (가로 막대 차트)
+- RepurchaseAddressChart (도넛 차트)
 **워드클라우드 구현 가이드 포함**
 
 ### [7. 배포 가이드](./07-deployment.md)
@@ -29,6 +40,11 @@ Zustand와 TanStack Query를 활용한 상태 관리 방법을 설명합니다.
 
 ### [8. 트러블슈팅](./08-troubleshooting.md)
 자주 발생하는 문제와 해결 방법을 정리합니다.
+**재구매 분석 관련:**
+- API 타임아웃 처리 (60초)
+- 비회원 고객 404 에러 해결
+- React Key 경고 해결
+- 빈 재구매 데이터 처리
 
 ---
 
@@ -69,26 +85,35 @@ npm run build
 - **회원가입 페이지**: 신규 사용자 등록
 - **비밀번호 찾기 페이지**: 비밀번호 재설정 링크 전송
 - **재구매 분석**: 재구매율, 고객별/상품별 재구매 데이터 분석 (기본 페이지)
+  - 실시간 API 연동 완료
+  - 회원/비회원 통합 분석
+  - 교차 재구매 분석 지원
 - **상품 분석**: 상품별 판매 데이터와 리뷰 분석
 - **고객 분석**: 고객 등급별 분포 및 구매 패턴 분석
 - **계정 관리**: 관리자 정보 및 설정
 
 ## 🔄 데이터 흐름
 
-### Mock 모드 (현재)
+### 현재 상태 (Hybrid)
 ```
-로그인 → Zustand Store → localStorage
-         ↓
-    상단/계정관리에 동일 정보 표시
+로그인 (Mock) → Zustand Store → localStorage
+                     ↓
+              상단/계정관리에 동일 정보 표시
+
+재구매 분석 (Production) → 실제 API (172.20.10.4:8000)
+                              ↓
+                        TanStack Query 캐싱
+                              ↓
+                        React 컴포넌트 렌더링
 ```
 
-### Production 모드 (백엔드 연동 후)
+### 완전 Production 모드 (향후)
 ```
 로그인 → 실제 API → JWT 토큰
          ↓
     Zustand Store → localStorage
          ↓
-    상단/계정관리에 실제 사용자 정보 표시
+    모든 페이지에서 실제 API 사용
 ```
 
 ## 📞 문의

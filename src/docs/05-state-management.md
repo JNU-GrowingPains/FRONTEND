@@ -261,16 +261,65 @@ export const useUserStore = create<State>((set) => ({
 ```typescript
 // hooks/useProducts.ts
 import { useQuery } from '@tanstack/react-query';
-import { mockProducts } from '../lib/mockData';
+import { getProducts } from '../services/product';
 
 export const useProducts = () => {
   return useQuery({
     queryKey: ['products'],
-    queryFn: async () => {
-      // API 호출 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return mockProducts;
-    },
+    queryFn: getProducts,
+    staleTime: 5 * 60 * 1000, // 5분
+    gcTime: 10 * 60 * 1000, // 10분
+  });
+};
+```
+
+### 재구매 분석 Hooks
+
+```typescript
+// hooks/useRepurchase.ts
+import { useQuery } from '@tanstack/react-query';
+import {
+  getRepurchaseProducts,
+  getRepurchaseKPIs,
+  getRepurchaseCustomers,
+  getCustomerRepurchaseDetail,
+} from '../services/repurchase';
+
+// 재구매 상품 목록
+export const useRepurchaseProducts = () => {
+  return useQuery({
+    queryKey: ['repurchase', 'products'],
+    queryFn: getRepurchaseProducts,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// 재구매 KPI (상품 ID에 따라 동적)
+export const useRepurchaseKPIs = (productIds: number[]) => {
+  return useQuery({
+    queryKey: ['repurchase', 'kpis', productIds],
+    queryFn: () => getRepurchaseKPIs(productIds),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+// 재구매 고객 목록
+export const useRepurchaseCustomers = (productIds: number[]) => {
+  return useQuery({
+    queryKey: ['repurchase', 'customers', productIds],
+    queryFn: () => getRepurchaseCustomers(productIds),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+// 고객별 재구매 상세 (선택 시에만 활성화)
+export const useCustomerRepurchaseDetail = (customerId: string | null) => {
+  return useQuery({
+    queryKey: ['repurchase', 'customer-detail', customerId],
+    queryFn: () => getCustomerRepurchaseDetail(customerId!),
+    enabled: !!customerId, // customerId가 있을 때만 실행
+    staleTime: 1 * 60 * 1000,
+    retry: 1, // 타임아웃 가능성이 있어 재시도 1회로 제한
   });
 };
 ```

@@ -28,6 +28,7 @@
 │   ├── useAuth.ts
 │   ├── useCustomers.ts
 │   ├── useProducts.ts
+│   ├── useRepurchase.ts       # 재구매 분석 hooks (API 연동)
 │   └── useReviews.ts
 │
 ├── lib/                        # 유틸리티 및 데이터
@@ -45,9 +46,10 @@
 │   └── SignupPage.tsx
 │
 ├── services/                   # API 서비스 레이어
-│   ├── api.ts
+│   ├── api.ts                 # API 클라이언트 (타임아웃 60초)
 │   ├── auth.ts
 │   ├── customers.ts
+│   ├── repurchase.ts          # 재구매 분석 API (실제 연동)
 │   ├── products.ts
 │   └── reviews.ts
 │
@@ -125,18 +127,30 @@
 
 #### `/components/repurchase` - 재구매 관련 컴포넌트
 
-- **RepurchaseKPICards.tsx**: 재구매 주요 지표 카드
-  - 재구매율, 평균 재구매 기간, 재구매 고객 수, 재구매 주기
+- **RepurchaseKPICards.tsx**: 재구매 주요 지표 5개 카드
+  - 총 재구매 고객 수
+  - 평균 재구매율 (%)
+  - 평균 재구매 소요 기간 (일)
+  - 동일 상품 재구매 비율 (%)
+  - 재구매 고객 매출 기여도 (%)
+  - 실시간 API 연동
   
 - **RepurchaseCustomerTable.tsx**: 재구매 고객 목록 테이블
-  - 고객별 재구매 정보 표시
-  - 고객 클릭 시 상세 정보 표시
+  - 회원/비회원 통합 표시
+  - 고객별 재구매 정보 (구매 횟수, 평균 재구매 기간, 등급)
+  - 클릭 시 고객 상세 정보 로드 (최대 60초)
+  - 고유 key 사용으로 React 최적화
   
-- **RepurchaseProductChart.tsx**: 고객별 재구매 상품 차트
+- **RepurchaseProductChart.tsx**: 고객별 재구매 상품 가로 막대 차트
   - 개별 고객의 재구매 상품 시각화
+  - 재구매 횟수와 비율 표시
+  - 동적 높이 조정
+  - 빈 데이터 처리 (EmptyState)
   
-- **RepurchaseAddressChart.tsx**: 지역별 재구매 배송지 차트
+- **RepurchaseAddressChart.tsx**: 지역별 재구매 배송지 도넛 차트
   - 지역별 재구매 배송지 분포 시각화
+  - 주소별 주문 비율 표시
+  - 색상 구분 및 툴팁
 
 #### `/components/reviews` - 리뷰 관련 컴포넌트
 
@@ -192,11 +206,26 @@ useReviews()
 useReviewWordCloud()
 ```
 
+#### `useRepurchase.ts` ⭐ **실제 API 연동**
+```typescript
+// 재구매 상품 목록
+useRepurchaseProducts()
+
+// 재구매 KPI (상품 ID에 따라 동적)
+useRepurchaseKPIs(productIds: number[])
+
+// 재구매 고객 목록
+useRepurchaseCustomers(productIds: number[])
+
+// 고객별 재구매 상세 (선택 시에만 활성화)
+useCustomerRepurchaseDetail(customerId: string | null)
+```
+
 **주요 특징:**
-- 자동 캐싱
-- 의존성 기반 리페칭
+- 자동 캐싱 및 의존성 기반 리페칭
 - 로딩/에러 상태 관리
 - Zustand store 연동
+- **재구매 분석**: 실제 API 연동, 조건부 실행, 타임아웃 처리
 
 ---
 
@@ -260,15 +289,24 @@ export const mockAccount = {
 - 비밀번호 재설정 링크 전송
 
 #### `RepurchaseAnalysisPage.tsx`
-재구매 분석 페이지 (기본 페이지)
+재구매 분석 페이지 (기본 페이지) - **실제 API 연동 완료**
 
 **구성:**
 - PageHeader (제목: "재구매 분석")
 - ProductSelector (상품 선택, 다중 선택 가능)
-- RepurchaseKPICards (재구매 주요 지표)
-- RepurchaseCustomerTable (재구매 고객 목록)
-- RepurchaseProductChart (고객별 재구매 상품)
-- RepurchaseAddressChart (지역별 재구매 배송지)
+  - 선택 없음: 전체 평균 KPI
+  - 단일 선택: 해당 상품 KPI
+  - 복수 선택: 교차 재구매 포함 평균 KPI
+- RepurchaseKPICards (재구매 주요 지표 5개)
+- RepurchaseCustomerTable (재구매 고객 목록, 회원/비회원 통합)
+- RepurchaseProductChart (고객별 재구매 상품, 가로 막대 차트)
+- RepurchaseAddressChart (지역별 재구매 배송지, 도넛 차트)
+
+**API 연동:**
+- `GET /api/v1/repurchase-analysis/products` - 상품 목록
+- `GET /api/v1/repurchase-analysis/kpis` - KPI 조회
+- `GET /api/v1/repurchase-analysis/customers` - 고객 목록
+- `GET /api/v1/repurchase-analysis/customer/{customer_id}/detail` - 고객 상세
 
 #### `ProductDetailPage.tsx`
 상품 분석 페이지
@@ -323,6 +361,29 @@ API 클라이언트 기본 설정 및 공통 유틸리티
 #### `reviews.ts`
 리뷰 관련 API 서비스
 - `getReviews()`, `getReviewKeywords()`
+
+#### `repurchase.ts` ⭐ **실제 API 연동**
+재구매 분석 관련 API 서비스
+
+**주요 함수:**
+- `getRepurchaseProducts()`: 재구매 분석용 상품 목록 조회
+- `getRepurchaseKPIs(productIds)`: 재구매 KPI 조회
+  - 상품 미선택: 전체 평균
+  - 단일 상품: 해당 상품 KPI
+  - 복수 상품: 교차 재구매 포함 평균
+- `getRepurchaseCustomers(productIds, page, limit)`: 재구매 고객 목록 조회
+  - 회원/비회원 통합
+  - 페이지네이션 지원
+- `getCustomerRepurchaseDetail(customerId)`: 고객별 재구매 상세 정보
+  - 재구매 상품 목록
+  - 재구매 배송지 목록
+  - 최대 60초 소요 가능
+
+**특징:**
+- URL 인코딩 처리 (비회원 ID: "이름|주소")
+- 배열 파라미터 FastAPI 스타일 (`?product_ids=10&product_ids=15`)
+- 문자열 → 숫자 파싱 (purchase_count, avg_period, point)
+- snake_case → camelCase 변환
 
 ### `/store` - 상태 관리
 

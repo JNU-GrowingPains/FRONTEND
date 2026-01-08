@@ -295,27 +295,137 @@ app.use(cors({
 
 #### 문제
 ```
-Error: timeout of 10000ms exceeded
+Error: timeout of 60000ms exceeded
+TimeoutError: signal timed out
+TypeError: Failed to fetch (ERR_CONNECTION_TIMED_OUT)
 ```
+
+#### 원인
+- 재구매 상세 API 등 복잡한 쿼리는 처리 시간이 길 수 있음 (최대 60초)
+- 백엔드 서버 성능 또는 데이터베이스 쿼리 최적화 필요
 
 #### 해결 방법
 ```typescript
-// axios 타임아웃 설정
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30초로 증가
-});
+// src/lib/config.ts
+export const config = {
+  // API 타임아웃을 60초로 설정 (재구매 상세 API 대응)
+  apiTimeout: 60000,
+};
 
-// TanStack Query 재시도 설정
+// src/services/api.ts
+const makeRequest = async <T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> => {
+  const response = await fetch(url, {
+    ...options,
+    signal: AbortSignal.timeout(config.apiTimeout),
+  });
+  return handleResponse<T>(response);
+};
+
+// TanStack Query 재시도 설정 (타임아웃 가능성 있는 API는 재시도 제한)
 useQuery({
-  queryKey: ['data'],
-  queryFn: fetchData,
-  retry: 3,
-  retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  queryKey: ['repurchase', 'customer-detail', customerId],
+  queryFn: () => getCustomerRepurchaseDetail(customerId!),
+  retry: 1, // 타임아웃 가능성이 있어 재시도 1회로 제한
+  staleTime: 1 * 60 * 1000,
 });
 ```
 
-### 3. 401 Unauthorized 에러
+**백엔드 최적화 권장사항:**
+1. 데이터베이스 인덱스 추가
+2. 쿼리 최적화 (N+1 문제 해결)
+3. Redis 등 캐싱 도입 (5-10분)
+4. 응답 시간 목표: 5초 이내
+
+### 3. 재구매 고객 상세 API 404 에러
+
+#### 문제
+```
+Failed to load resource: the server responded with a status of 404 (Not Found)
+GET /api/v1/repurchase-analysis/customer/장수진|강원특별자치도.../detail
+ApiError: 고객을 찾을 수 없습니다
+```
+
+#### 원인
+- 비회원 고객 ID가 "이름|주소" 형식으로 특수문자 포함
+- URL 인코딩 필요
+- 백엔드 API 간 customer_id 불일치
+
+#### 해결 방법
+```typescript
+// src/services/repurchase.ts
+export async function getCustomerRepurchaseDetail(
+  customerId: string
+): Promise<CustomerRepurchaseData> {
+  // URL 인코딩 처리
+  const encodedId = encodeURIComponent(customerId);
+  const response = await apiClient.get<CustomerRepurchaseDetail>(
+    `/api/v1/repurchase-analysis/customer/${encodedId}/detail`
+  );
+  // ...
+}
+```
+
+**백엔드 확인사항:**
+- `/customers` API의 `customer_id`와 `/customer/{customer_id}/detail` API의 ID가 정확히 일치해야 함
+- 비회원의 경우 "이름|주소" 형식이 양쪽 API에서 동일해야 함
+
+### 4. 재구매 고객 테이블 React Key 경고
+
+#### 문제
+```
+Warning: Encountered two children with the same key, ``
+```
+
+#### 원인
+- 비회원 고객의 `customer_id`가 빈 문자열이어서 중복 key 발생
+
+#### 해결 방법
+백엔드에서 `/customers` API 응답 시 비회원의 `customer_id`를 "이름|주소" 형식으로 제공:
+
+```json
+{
+  "user_id": null,
+  "customer_id": "장수진|강원특별자치도 원주시 한지공원길 102",
+  "name": "장수진",
+  "grade": "전체"
+}
+```
+
+프론트엔드에서는 이를 그대로 사용:
+```typescript
+// src/services/repurchase.ts
+id: customer.customer_id, // 백엔드에서 제공하는 고유 ID 사용
+```
+
+### 5. 빈 재구매 상품 데이터
+
+#### 문제
+고객 상세 API에서 `products` 배열이 비어있음
+
+#### 원인
+정상적인 경우로, 다음과 같은 이유일 수 있음:
+- 고객이 구매는 했지만 아직 재구매하지 않음
+- 특정 상품을 선택했지만 해당 고객은 그 상품을 구매하지 않음
+- 데이터 집계 시점 차이
+
+#### 해결 방법
+```typescript
+// UI에서 빈 데이터 처리
+{customerRepurchaseDetail?.products && 
+ customerRepurchaseDetail.products.length > 0 ? (
+  <RepurchaseProductChart data={customerRepurchaseDetail.products} />
+) : (
+  <EmptyState
+    title="재구매 상품 데이터가 없습니다"
+    description="해당 고객은 아직 재구매한 상품이 없거나, 데이터가 집계되지 않았습니다."
+  />
+)}
+```
+
+### 6. 401 Unauthorized 에러
 
 #### 문제
 인증 토큰 문제로 API 요청 실패
