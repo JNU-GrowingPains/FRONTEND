@@ -48,15 +48,7 @@ export function RepurchaseProductChart({ data }: RepurchaseProductChartProps) {
               tickFormatter={formatProductName}
             />
             <Tooltip
-              formatter={(value: number) => [`${value}회`, '재구매 수']}
-              labelFormatter={(label: string) => `상품: ${label}`}
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              }}
+              content={() => null}
               cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }}
             />
             <Bar 

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
 interface RepurchaseCustomerTableProps {
   customers: RepurchaseCustomer[];
+  allCustomers?: RepurchaseCustomer[];
   onCustomerClick?: (customerId: string) => void;
   selectedCustomerId?: string | null;
   gradeFilter?: string;
@@ -18,6 +19,7 @@ const ITEMS_PER_PAGE = 20;
 
 export function RepurchaseCustomerTable({ 
   customers, 
+  allCustomers,
   onCustomerClick, 
   selectedCustomerId,
   gradeFilter,
@@ -110,8 +112,11 @@ export function RepurchaseCustomerTable({
   };
 
   const getGradeCount = (grade: string | undefined) => {
-    if (!grade) return customers.length;
-    return customers.filter(c => {
+    // allCustomers가 있으면 전체 데이터에서 카운트, 없으면 현재 데이터 사용
+    const dataForCount = allCustomers || customers;
+    
+    if (!grade) return dataForCount.length;
+    return dataForCount.filter(c => {
       const customerGrade = String(c.grade).trim();
       const filterGrade = String(grade).trim();
       return customerGrade === filterGrade;

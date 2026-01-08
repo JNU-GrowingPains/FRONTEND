@@ -36,6 +36,13 @@ export function RepurchaseAnalysisPage() {
     sort_by: sortBy,
   });
   
+  // 등급별 카운트 계산용 전체 데이터 (필터 없이)
+  const { data: allCustomersData } = useRepurchaseCustomers({
+    product_ids: selectedProductIds.length > 0 ? selectedProductIds : undefined,
+    sort_by: sortBy,
+    // grade는 전달하지 않음 (전체 조회)
+  });
+  
   // 재구매 상품 목록 로그 출력
   useEffect(() => {
     console.log('재구매 상품 목록:', repurchaseProducts);
@@ -225,6 +232,7 @@ export function RepurchaseAnalysisPage() {
             <>
               <RepurchaseCustomerTable 
                 customers={customersData}
+                allCustomers={allCustomersData}
                 onCustomerClick={handleCustomerClick}
                 selectedCustomerId={selectedCustomerId}
                 gradeFilter={gradeFilter}
