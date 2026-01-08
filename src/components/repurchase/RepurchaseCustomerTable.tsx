@@ -262,7 +262,7 @@ export function RepurchaseCustomerTable({
                   onClick={() => onCustomerClick?.(customer.id)}
                 >
                   <td className="py-3 px-4 text-sm border-r border-gray-200 font-mono">
-                    {customer.id}
+                    {customer.customerId}
                   </td>
                   <td className="py-3 px-4 text-sm border-r border-gray-200 font-medium">
                     {customer.name}
